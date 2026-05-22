@@ -11,7 +11,7 @@ const { publishJob } = require('../services/publishService')
 
 const router = express.Router()
 const supabase = require('../lib/supabase')
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+const getAnthropic = () => new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || 'placeholder' })
 const upload = multer({ storage: multer.diskStorage({ destination: os.tmpdir(), filename: (req, f, cb) => cb(null, `photo_${uuidv4()}${path.extname(f.originalname)}`) }) })
 
 // Global SSE clients for live alerts
@@ -93,7 +93,7 @@ router.post('/alerts/:id/regenerate-caption', auth, async (req, res) => {
     const { data: alert } = await supabase.from('breaking_alerts').select('*').eq('id', req.params.id).single()
     if (!alert) return res.status(404).json({ error: 'Alert not found' })
 
-    const message = await anthropic.messages.create({
+    const message = await getAnthropic().messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 800,
       messages: [{

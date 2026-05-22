@@ -5,7 +5,7 @@ const thumbnailGenerator = require('./thumbnailGenerator')
 const pushNotification = require('./pushNotification')
 
 const supabase = require('../lib/supabase')
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+const getAnthropic = () => new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || 'placeholder' })
 
 let isRunning = false
 
@@ -65,7 +65,7 @@ const calculatePriority = async (headline, fullText) => {
 
 const generateCaptions = async (headline, sourceName, fullText) => {
   try {
-    const message = await anthropic.messages.create({
+    const message = await getAnthropic().messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 800,
       messages: [{

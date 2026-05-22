@@ -2,10 +2,10 @@ const OpenAI = require('openai')
 const fs = require('fs')
 const path = require('path')
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+const getClient = () => new OpenAI({ apiKey: process.env.OPENAI_API_KEY || 'placeholder' })
 
 const transcribeAudio = async (audioPath, language = 'auto') => {
-  const response = await openai.audio.transcriptions.create({
+  const response = await getClient().audio.transcriptions.create({
     file: fs.createReadStream(audioPath),
     model: 'whisper-1',
     response_format: 'srt',
