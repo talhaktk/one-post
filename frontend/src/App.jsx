@@ -26,6 +26,7 @@ import CreateSchedule from './screens/CreateSchedule'
 import ScheduleCalendar from './screens/ScheduleCalendar'
 import ScheduleList from './screens/ScheduleList'
 import PostResults from './screens/PostResults'
+import AdminConfig from './screens/AdminConfig'
 
 const MAIN_NAV = ['/', '/upload', '/alerts', '/schedule', '/settings']
 
@@ -77,6 +78,7 @@ export default function App() {
       <Route path="/publishing" element={<ProtectedRoute><AppShell><Publishing /></AppShell></ProtectedRoute>} />
       <Route path="/history" element={<ProtectedRoute><AppShell><History /></AppShell></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><AppShell><Settings /></AppShell></ProtectedRoute>} />
+      <Route path="/admin/config" element={<ProtectedRoute><AppShell><AdminConfig /></AppShell></ProtectedRoute>} />
 
       {/* Module A */}
       <Route path="/alerts" element={<ProtectedRoute><AppShell><BreakingAlerts /></AppShell></ProtectedRoute>} />

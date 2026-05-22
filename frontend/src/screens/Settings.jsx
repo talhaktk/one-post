@@ -57,6 +57,20 @@ export default function Settings() {
         <div style={{ fontSize: 22, fontFamily: 'Syne', fontWeight: 800 }}>Settings</div>
       </div>
 
+      {/* API Keys */}
+      <div className="card" style={{ padding: '16px', marginBottom: 16, cursor: 'pointer' }} onClick={() => navigate('/admin/config')}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(124,58,237,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>🔑</div>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: 15 }}>API Keys</div>
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>Meta, YouTube, TikTok, Twitter, AI</div>
+            </div>
+          </div>
+          <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 20 }}>›</span>
+        </div>
+      </div>
+
       {/* Connect Accounts */}
       <div className="card" style={{ padding: '16px', marginBottom: 16, cursor: 'pointer' }} onClick={() => navigate('/accounts')}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

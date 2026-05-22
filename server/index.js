@@ -34,6 +34,8 @@ app.use('/api/auth', require('./routes/auth'))
 app.use('/api/news', require('./routes/news'))
 app.use('/api/schedule', require('./routes/schedule'))
 
+app.use('/api/admin', require('./routes/admin'))
+
 // Health check
 app.get('/health', (req, res) => res.json({ status: 'ok', time: new Date().toISOString() }))
 
