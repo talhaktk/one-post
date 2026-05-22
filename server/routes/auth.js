@@ -25,7 +25,7 @@ router.get('/oauth-url/:platform', async (req, res) => {
       result = await provider.getAuthUrl()
       oauthStore[result.state] = { codeVerifier: result.codeVerifier }
     } else {
-      result = { url: provider.getAuthUrl() }
+      result = { url: await provider.getAuthUrl() }
     }
     res.json(result)
   } catch (err) {
