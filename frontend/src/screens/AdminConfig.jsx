@@ -37,7 +37,7 @@ export default function AdminConfig() {
 
   useEffect(() => {
     api.get('/admin/config')
-      .then(r => { if (r?.data && typeof r.data === 'object') setValues(r.data) })
+      .then(r => { if (r && typeof r === 'object') setValues(r) })
       .catch(() => {})
   }, [])
 
@@ -46,6 +46,8 @@ export default function AdminConfig() {
     try {
       await api.post('/admin/config', values)
       toast.success('API keys saved!')
+      const r = await api.get('/admin/config')
+      if (r && typeof r === 'object') setValues(r)
     } catch { toast.error('Failed to save') }
     finally { setSaving(false) }
   }
