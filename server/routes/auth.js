@@ -61,10 +61,10 @@ async function handleCallback(platform, { code, state, user_id }, stored) {
       user_id, platform: 'facebook',
       access_token: tokens.access_token,
       is_active: true, connected_at: new Date().toISOString()
-    }, { onConflict: 'user_id,platform' }).select().single()
+    }, { onConflict: 'user_id,platform' }).select('id').single()
 
     const pages = await OAUTH_PROVIDERS.facebook.getAllPages(tokens.access_token)
-    if (pages.length) {
+    if (pages.length && platformData?.id) {
       const pageRecords = pages.map(p => ({
         user_id, connected_platform_id: platformData.id,
         page_id: p.id, page_name: p.name,
