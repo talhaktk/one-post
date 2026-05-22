@@ -41,7 +41,7 @@ router.post('/upload', auth, upload.single('video'), async (req, res) => {
 
     const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(storagePath)
 
-    const { data: videoData } = await supabase.from('videos').insert({
+    const { data: videoData, error: insertErr } = await supabase.from('videos').insert({
       user_id: req.user.id,
       original_url: urlData.publicUrl,
       title, description, category,
@@ -49,6 +49,8 @@ router.post('/upload', auth, upload.single('video'), async (req, res) => {
       file_size_mb: parseFloat((file.size / 1024 / 1024).toFixed(2)),
       media_type
     }).select().single()
+
+    if (insertErr) throw new Error('DB insert failed: ' + insertErr.message)
 
     fs.unlinkSync(file.path)
     res.json({ video_id: videoData.id, original_url: urlData.publicUrl, video: videoData })
