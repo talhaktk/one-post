@@ -8,12 +8,13 @@ const createOAuthClient = async () => new google.auth.OAuth2(
   process.env.YOUTUBE_REDIRECT_URI
 )
 
-const getAuthUrl = async () => {
+const getAuthUrl = async (state) => {
   const client = await createOAuthClient()
   return client.generateAuthUrl({
     access_type: 'offline',
     scope: ['https://www.googleapis.com/auth/youtube.upload'],
-    prompt: 'consent'
+    prompt: 'consent',
+    ...(state && { state })
   })
 }
 

@@ -41,7 +41,7 @@ export default function ConnectAccounts() {
   const connectPlatform = async (platform) => {
     setConnectLoading(prev => ({ ...prev, [platform]: true }))
     try {
-      const { url } = await getOAuthUrl(platform)
+      const { url } = await getOAuthUrl(platform, user.id)
       window.location.href = url
     } catch (err) {
       toast.error(`Failed to connect ${platform}: ${err.message}`)

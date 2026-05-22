@@ -48,7 +48,8 @@ export const disconnectAccount = (accountId) => api.delete(`/accounts/${accountI
 export const syncFacebookPages = (userId) => api.post(`/accounts/facebook/sync-pages`, { user_id: userId })
 
 // OAuth helpers
-export const getOAuthUrl = (platform) => api.get(`/auth/oauth-url/${platform}`)
+export const getOAuthUrl = (platform, userId) =>
+  api.get(`/auth/oauth-url/${platform}`, { params: { user_id: userId } })
 export const handleOAuthCallback = (platform, code, state) =>
   api.post(`/auth/oauth-callback/${platform}`, { code, state })
 

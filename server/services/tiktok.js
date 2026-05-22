@@ -5,13 +5,13 @@ const cfg = require('./configService')
 
 const BASE = 'https://open.tiktokapis.com/v2'
 
-const getAuthUrl = async () => {
+const getAuthUrl = async (state) => {
   const params = new URLSearchParams({
     client_key: await cfg.get('TIKTOK_CLIENT_KEY'),
     redirect_uri: process.env.TIKTOK_REDIRECT_URI,
     response_type: 'code',
     scope: 'video.upload,user.info.basic',
-    state: `tiktok_${Date.now()}`
+    state: state || `tiktok_${Date.now()}`
   })
   return `https://www.tiktok.com/v2/auth/authorize/?${params}`
 }

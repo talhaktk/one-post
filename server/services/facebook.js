@@ -5,13 +5,13 @@ const cfg = require('./configService')
 
 const BASE = 'https://graph.facebook.com/v18.0'
 
-const getAuthUrl = async () => {
+const getAuthUrl = async (state) => {
   const params = new URLSearchParams({
     client_id: await cfg.get('META_APP_ID'),
     redirect_uri: process.env.META_REDIRECT_URI,
     scope: 'pages_manage_posts,pages_read_engagement,pages_show_list,business_management',
     response_type: 'code',
-    state: 'facebook'
+    state: state || 'facebook'
   })
   return `https://www.facebook.com/dialog/oauth?${params}`
 }
