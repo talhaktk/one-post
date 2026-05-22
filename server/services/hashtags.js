@@ -1,0 +1,113 @@
+const axios = require('axios')
+const xml2js = require('xml2js')
+const Anthropic = require('@anthropic-ai/sdk')
+
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+
+const fetchTwitterTrends = async () => {
+  // Twitter Trends API for Pakistan (WOEID: 23424922)
+  // Requires Twitter API v1.1 Bearer token — use app-only auth
+  try {
+    const res = await axios.get('https://api.twitter.com/1.1/trends/place.json?id=23424922', {
+      headers: { Authorization: `Bearer ${process.env.TWITTER_BEARER_TOKEN}` }
+    })
+    const trends = res.data[0]?.trends || []
+    return trends.slice(0, 20).map(t => ({ tag: t.name.replace(/^#/, ''), volume: t.tweet_volume || 0 }))
+  } catch (err) {
+    console.error('Twitter trends error:', err.message)
+    return []
+  }
+}
+
+const fetchGoogleTrends = async () => {
+  try {
+    const res = await axios.get('https://trends.google.com/trends/trendingsearches/daily/rss?geo=PK', { timeout: 5000 })
+    const parsed = await xml2js.parseStringPromise(res.data)
+    const items = parsed.rss?.channel?.[0]?.item || []
+    return items.slice(0, 20).map(item => ({
+      tag: (item.title?.[0] || '').replace(/\s+/g, '_').replace(/[^\w_]/g, ''),
+      volume: 0
+    })).filter(t => t.tag)
+  } catch (err) {
+    console.error('Google trends error:', err.message)
+    return []
+  }
+}
+
+const fetchTikTokTrends = async () => {
+  try {
+    const res = await axios.get('https://ads.tiktok.com/business/creativecenter/trending-hashtag/pc/en', {
+      headers: { 'User-Agent': 'Mozilla/5.0' }, timeout: 8000
+    })
+    const matches = res.data.match(/"hashtag_name":"([^"]+)"/g) || []
+    return matches.slice(0, 20).map(m => ({ tag: m.match(/"hashtag_name":"([^"]+)"/)?.[1] || '', volume: 0 })).filter(t => t.tag)
+  } catch {
+    return [
+      { tag: 'Pakistan', volume: 0 }, { tag: 'PTI', volume: 0 }, { tag: 'ImranKhan', volume: 0 },
+      { tag: 'PakistanPolitics', volume: 0 }, { tag: 'PMLN', volume: 0 }
+    ]
+  }
+}
+
+const getInstagramPreset = () => [
+  { tag: 'Pakistan', volume: 0 }, { tag: 'PakistanPolitics', volume: 0 }, { tag: 'ImranKhan', volume: 0 },
+  { tag: 'PTI', volume: 0 }, { tag: 'PakistanNews', volume: 0 }, { tag: 'PMLN', volume: 0 },
+  { tag: 'PPP', volume: 0 }, { tag: 'Islamabad', volume: 0 }, { tag: 'Lahore', volume: 0 },
+  { tag: 'Karachi', volume: 0 }, { tag: 'پاکستان', volume: 0 }, { tag: 'سیاست', volume: 0 },
+  { tag: 'عمرانخان', volume: 0 }, { tag: 'BreakingNews', volume: 0 }, { tag: 'Politics', volume: 0 }
+]
+
+const getYouTubePreset = () => [
+  { tag: 'PakistanPolitics', volume: 0 }, { tag: 'PTI', volume: 0 }, { tag: 'ImranKhan', volume: 0 },
+  { tag: 'PMLN', volume: 0 }, { tag: 'PPP', volume: 0 }, { tag: 'PakistanNews', volume: 0 },
+  { tag: 'Pakistan', volume: 0 }, { tag: 'BreakingNews', volume: 0 }, { tag: 'Islamabad', volume: 0 },
+  { tag: 'LiveNews', volume: 0 }, { tag: 'PakistaniPolitics', volume: 0 }, { tag: 'CurrentAffairs', volume: 0 }
+]
+
+const fetchAllTrending = async () => {
+  const [twitter, google, tiktok] = await Promise.allSettled([
+    fetchTwitterTrends(),
+    fetchGoogleTrends(),
+    fetchTikTokTrends()
+  ])
+
+  return {
+    fetched_at: new Date().toISOString(),
+    platforms: {
+      twitter: twitter.status === 'fulfilled' ? twitter.value : [],
+      google: google.status === 'fulfilled' ? google.value : [],
+      tiktok: tiktok.status === 'fulfilled' ? tiktok.value : [],
+      instagram: getInstagramPreset(),
+      youtube: getYouTubePreset()
+    }
+  }
+}
+
+const generateAISuggestions = async (title, description, category) => {
+  const message = await anthropic.messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 500,
+    messages: [{
+      role: 'user',
+      content: `Suggest 15 trending Pakistani political hashtags for this content:
+
+Title: ${title}
+Description: ${description || 'N/A'}
+Category: ${category || 'Politics'}
+
+Mix English and Urdu hashtags. Make them relevant to Pakistan politics, news, and current affairs.
+Return ONLY a valid JSON array of strings, no explanation:
+["hashtag1", "hashtag2", ...]`
+    }]
+  })
+
+  const text = message.content[0].text.trim()
+  const match = text.match(/\[[\s\S]*\]/)
+  if (match) {
+    const arr = JSON.parse(match[0])
+    return arr.map(t => t.replace(/^#/, '').trim()).filter(Boolean)
+  }
+  return []
+}
+
+module.exports = { fetchAllTrending, generateAISuggestions }
