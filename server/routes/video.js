@@ -21,27 +21,33 @@ const upload = multer({
 
 router.post('/upload', auth, upload.single('video'), async (req, res) => {
   try {
-    const { title, description, category } = req.body
+    const { title, description, category, media_type = 'video' } = req.body
     const file = req.file
     if (!file) return res.status(400).json({ error: 'No file uploaded' })
 
-    const videoInfo = await getVideoInfo(file.path)
-    const fileBuffer = fs.readFileSync(file.path)
-    const storagePath = `videos/${req.user.id}/${uuidv4()}${path.extname(file.originalname)}`
+    const isImage = media_type === 'image'
+    let duration = 0
+    if (!isImage) {
+      const videoInfo = await getVideoInfo(file.path)
+      duration = Math.round(videoInfo.duration || 0)
+    }
 
-    const { error: uploadErr } = await supabase.storage.from('videos').upload(storagePath, fileBuffer, { contentType: file.mimetype })
+    const fileBuffer = fs.readFileSync(file.path)
+    const bucket = isImage ? 'images' : 'videos'
+    const storagePath = `${bucket}/${req.user.id}/${uuidv4()}${path.extname(file.originalname)}`
+
+    const { error: uploadErr } = await supabase.storage.from(bucket).upload(storagePath, fileBuffer, { contentType: file.mimetype })
     if (uploadErr) throw uploadErr
 
-    const { data: urlData } = supabase.storage.from('videos').getPublicUrl(storagePath)
+    const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(storagePath)
 
     const { data: videoData } = await supabase.from('videos').insert({
       user_id: req.user.id,
       original_url: urlData.publicUrl,
-      title,
-      description,
-      category,
-      duration_seconds: Math.round(videoInfo.duration || 0),
-      file_size_mb: parseFloat((file.size / 1024 / 1024).toFixed(2))
+      title, description, category,
+      duration_seconds: duration,
+      file_size_mb: parseFloat((file.size / 1024 / 1024).toFixed(2)),
+      media_type
     }).select().single()
 
     fs.unlinkSync(file.path)

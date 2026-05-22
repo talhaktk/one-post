@@ -29,7 +29,8 @@ export default function Publishing() {
         targets: buildTargets(),
         hashtags_per_platform: postState.hashtags,
         scheduled_at: postState.scheduledAt || null,
-        post_delay_seconds: postState.postDelay || 30
+        post_delay_seconds: postState.postDelay || 30,
+        media_type: postState.mediaType || 'video'
       }
 
       const initTargets = buildInitialTargets()
@@ -49,6 +50,7 @@ export default function Publishing() {
     if (postState.targets.youtube) t.push({ platform: 'youtube', clip_id: getClipId('youtube') })
     if (postState.targets.instagram_reels) t.push({ platform: 'instagram_reels', clip_id: getClipId('instagram_reels') })
     if (postState.targets.instagram_feed) t.push({ platform: 'instagram_feed', clip_id: getClipId('instagram_feed') })
+    if (postState.targets.instagram_image) t.push({ platform: 'instagram_image' })
     if (postState.targets.facebook && postState.selectedFacebookPages.length) t.push({ platform: 'facebook', page_ids: postState.selectedFacebookPages, clip_id: getClipId('facebook') })
     if (postState.targets.tiktok && postState.selectedTikTokAccounts.length) t.push({ platform: 'tiktok', account_ids: postState.selectedTikTokAccounts, clip_id: getClipId('tiktok') })
     if (postState.targets.twitter) t.push({ platform: 'twitter', clip_id: getClipId('twitter') })

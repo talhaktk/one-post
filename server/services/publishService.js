@@ -42,8 +42,24 @@ const getClipPath = async (clipId, platform, videoId) => {
   throw new Error('No video file found')
 }
 
+const getImageUrl = async (videoId) => {
+  const { data } = await supabase.from('videos').select('original_url').eq('id', videoId).single()
+  if (!data?.original_url) throw new Error('Image not found')
+  return data.original_url
+}
+
+const downloadToTemp = async (url, ext = '.jpg') => {
+  const fetch = require('node-fetch')
+  const res = await fetch(url)
+  const buffer = await res.buffer()
+  const tmpPath = path.join(os.tmpdir(), `img_${uuidv4()}${ext}`)
+  fs.writeFileSync(tmpPath, buffer)
+  return tmpPath
+}
+
 const publishJob = async (jobId, payload, userId) => {
-  const { video_id, targets, hashtags_per_platform, title, description, post_delay_seconds = 30 } = payload
+  const { video_id, targets, hashtags_per_platform, title, description, post_delay_seconds = 30, media_type = 'video' } = payload
+  const isImage = media_type === 'image'
 
   emit(jobId, { type: 'started', job_id: jobId })
 
@@ -73,23 +89,28 @@ const publishJob = async (jobId, payload, userId) => {
       await wait(post_delay_seconds)
     }
 
-    if (platform === 'instagram_reels' || platform === 'instagram_feed') {
-      // Instagram publish
-      emit(jobId, { type: 'progress', platform, target_id: platform, target_name: platform === 'instagram_reels' ? 'Instagram Reels' : 'Instagram Feed', status: 'uploading', progress: 20 })
+    if (platform === 'instagram_reels' || platform === 'instagram_feed' || platform === 'instagram_image') {
+      const targetName = platform === 'instagram_reels' ? 'Instagram Reels' : platform === 'instagram_image' ? 'Instagram Image' : 'Instagram Feed'
+      emit(jobId, { type: 'progress', platform, target_id: platform, target_name: targetName, status: 'uploading', progress: 20 })
       try {
-        // Instagram requires public URL, so use the Supabase URL directly
         const { data: account } = await supabase.from('connected_platforms').select('*').eq('user_id', userId).eq('platform', 'instagram').eq('is_active', true).single()
         if (!account) throw new Error('Instagram not connected')
         const instagram = require('./instagram')
         const igAccountId = account.platform_user_id
-        const { data: clip } = await supabase.from('processed_clips').select('clip_url').eq('id', clip_id).single()
         const caption = `${description || title}\n${(hashtags_per_platform?.instagram || []).map(t => `#${t}`).join(' ')}`
-        const res = await instagram.uploadReel(account.access_token, igAccountId, { videoUrl: clip?.clip_url, caption })
-        emit(jobId, { type: 'progress', platform, target_id: platform, target_name: 'Instagram', status: 'published', progress: 100, post_url: res.post_url })
+        let res
+        if (isImage || platform === 'instagram_image') {
+          const imageUrl = await getImageUrl(video_id)
+          res = await instagram.uploadImage(account.access_token, igAccountId, { imageUrl, caption })
+        } else {
+          const { data: clip } = await supabase.from('processed_clips').select('clip_url').eq('id', clip_id).single()
+          res = await instagram.uploadReel(account.access_token, igAccountId, { videoUrl: clip?.clip_url, caption })
+        }
+        emit(jobId, { type: 'progress', platform, target_id: platform, target_name: targetName, status: 'published', progress: 100, post_url: res.post_url })
         results.push({ platform, status: 'published', platform_post_url: res.post_url })
         await supabase.from('posts').insert({ video_id, user_id: userId, platform, status: 'published', published_at: new Date().toISOString(), platform_post_url: res.post_url })
       } catch (err) {
-        emit(jobId, { type: 'progress', platform, target_id: platform, target_name: 'Instagram', status: 'failed', error_message: err.message })
+        emit(jobId, { type: 'progress', platform, target_id: platform, target_name: targetName, status: 'failed', error_message: err.message })
         results.push({ platform, status: 'failed', error: err.message })
         await supabase.from('posts').insert({ video_id, user_id: userId, platform, status: 'failed', error_message: err.message })
       }
@@ -99,10 +120,16 @@ const publishJob = async (jobId, payload, userId) => {
     if (platform === 'facebook' && page_ids?.length) {
       const { data: pages } = await supabase.from('facebook_pages').select('*').eq('user_id', userId).in('page_id', page_ids).eq('is_active', true)
       if (pages?.length) {
-        const filePath = await getClipPath(clip_id, 'facebook', video_id)
         const fb = require('./facebook')
-        await fb.uploadToAllPages(pages, filePath, title, description, post_delay_seconds, (event) => emit(jobId, event))
-        fs.unlinkSync(filePath)
+        if (isImage) {
+          const imageUrl = await getImageUrl(video_id)
+          const caption = `${title}\n\n${description || ''}\n${(hashtags_per_platform?.facebook || []).map(t => `#${t}`).join(' ')}`
+          await fb.uploadPhotosToAllPages(pages, imageUrl, caption, post_delay_seconds, (event) => emit(jobId, event))
+        } else {
+          const filePath = await getClipPath(clip_id, 'facebook', video_id)
+          await fb.uploadToAllPages(pages, filePath, title, description, post_delay_seconds, (event) => emit(jobId, event))
+          fs.unlinkSync(filePath)
+        }
       }
     }
 
@@ -121,14 +148,23 @@ const publishJob = async (jobId, payload, userId) => {
       try {
         const { data: account } = await supabase.from('connected_platforms').select('*').eq('user_id', userId).eq('platform', 'twitter').eq('is_active', true).single()
         if (!account) throw new Error('Twitter not connected')
-        const filePath = await getClipPath(clip_id, platform, video_id)
         const twitter = require('./twitter')
         const tags = hashtags_per_platform?.twitter || []
-        const res = await twitter.uploadAndTweet(account.access_token, { videoPath: filePath, text: title, hashtags: tags })
+        let res
+        if (isImage) {
+          const imageUrl = await getImageUrl(video_id)
+          const ext = path.extname(imageUrl) || '.jpg'
+          const tmpPath = await downloadToTemp(imageUrl, ext)
+          res = await twitter.uploadAndTweetImage(account.access_token, { imagePath: tmpPath, text: title, hashtags: tags })
+          fs.unlinkSync(tmpPath)
+        } else {
+          const filePath = await getClipPath(clip_id, platform, video_id)
+          res = await twitter.uploadAndTweet(account.access_token, { videoPath: filePath, text: title, hashtags: tags })
+          fs.unlinkSync(filePath)
+        }
         emit(jobId, { type: 'progress', platform, target_id: 'twitter', target_name: 'X / Twitter', status: 'published', progress: 100, post_url: res.post_url })
         results.push({ platform, status: 'published', platform_post_url: res.post_url })
         await supabase.from('posts').insert({ video_id, user_id: userId, platform, status: 'published', published_at: new Date().toISOString(), platform_post_url: res.post_url, hashtags_used: tags })
-        fs.unlinkSync(filePath)
       } catch (err) {
         emit(jobId, { type: 'progress', platform, target_id: 'twitter', target_name: 'X / Twitter', status: 'failed', error_message: err.message })
         results.push({ platform, status: 'failed', error: err.message })

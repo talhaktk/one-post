@@ -8,12 +8,18 @@ import FacebookPageItem from '../components/FacebookPageItem'
 import TikTokAccountItem from '../components/TikTokAccountItem'
 import toast from 'react-hot-toast'
 
-const PLATFORMS_CONFIG = [
+const VIDEO_PLATFORMS = [
   { key: 'youtube', label: 'YouTube', icon: '▶️', color: '#FF0000' },
   { key: 'instagram_reels', label: 'Instagram Reels', icon: '🎬', color: '#E1306C' },
   { key: 'instagram_feed', label: 'Instagram Feed', icon: '📸', color: '#833AB4' },
   { key: 'facebook', label: 'Facebook Pages', icon: '🔵', color: '#1877F2' },
   { key: 'tiktok', label: 'TikTok', icon: '🎵', color: '#69C9D0' },
+  { key: 'twitter', label: 'X (Twitter)', icon: '✖️', color: '#FFFFFF' }
+]
+
+const IMAGE_PLATFORMS = [
+  { key: 'instagram_image', label: 'Instagram', icon: '📸', color: '#E1306C' },
+  { key: 'facebook', label: 'Facebook Pages', icon: '🔵', color: '#1877F2' },
   { key: 'twitter', label: 'X (Twitter)', icon: '✖️', color: '#FFFFFF' }
 ]
 
@@ -89,6 +95,8 @@ export default function SelectTargets() {
     navigate('/publishing')
   }
 
+  const isImage = postState.mediaType === 'image'
+  const PLATFORMS_CONFIG = isImage ? IMAGE_PLATFORMS : VIDEO_PLATFORMS
   const filteredFbPages = fbPages.filter(p => p.page_name.toLowerCase().includes(fbSearch.toLowerCase()))
   const selectedCount = Object.values(postState.targets).filter(Boolean).length
 
@@ -96,7 +104,7 @@ export default function SelectTargets() {
     <div style={{ padding: '0 16px 16px' }}>
       <div style={{ padding: '20px 0 16px' }}>
         <div style={{ fontSize: 22, fontFamily: 'Syne', fontWeight: 800 }}>Select Targets</div>
-        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>Step 4 of 4 — Choose where to publish</div>
+        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>Step {isImage ? '3 of 3' : '4 of 4'} — Choose where to publish</div>
       </div>
 
       {/* Platform toggles */}

@@ -3,6 +3,7 @@ import { createContext, useContext, useState } from 'react'
 const PostContext = createContext(null)
 
 const defaultState = {
+  mediaType: 'video',
   videoFile: null,
   videoMeta: null,
   videoId: null,

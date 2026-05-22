@@ -25,4 +25,13 @@ const uploadAndTweet = async (accessToken, { videoPath, text, hashtags }) => {
   return { post_id: tweet.data.id, post_url: `https://twitter.com/i/status/${tweet.data.id}` }
 }
 
-module.exports = { getAuthUrl, exchangeCode, uploadAndTweet }
+const uploadAndTweetImage = async (accessToken, { imagePath, text, hashtags }) => {
+  const client = new TwitterApi(accessToken)
+  const rwClient = client.readWrite
+  const mediaId = await rwClient.v1.uploadMedia(imagePath, { mimeType: 'image/jpeg' })
+  const tweetText = `${text} ${hashtags.map(t => `#${t}`).join(' ')}`.slice(0, 280)
+  const tweet = await rwClient.v2.tweet({ text: tweetText, media: { media_ids: [mediaId] } })
+  return { post_id: tweet.data.id, post_url: `https://twitter.com/i/status/${tweet.data.id}` }
+}
+
+module.exports = { getAuthUrl, exchangeCode, uploadAndTweet, uploadAndTweetImage }

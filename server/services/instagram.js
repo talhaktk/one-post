@@ -45,4 +45,22 @@ const uploadReel = async (accessToken, igAccountId, { videoUrl, caption }) => {
   return { post_id: publishRes.data.id, post_url: `https://www.instagram.com/p/${publishRes.data.id}/` }
 }
 
-module.exports = { getAuthUrl, exchangeCode, getInstagramAccountId, uploadReel }
+const uploadImage = async (accessToken, igAccountId, { imageUrl, caption }) => {
+  const containerRes = await axios.post(`${BASE}/${igAccountId}/media`, {
+    image_url: imageUrl, caption, access_token: accessToken
+  })
+  const containerId = containerRes.data.id
+  let status = ''
+  let attempts = 0
+  while (status !== 'FINISHED' && attempts < 12) {
+    await new Promise(r => setTimeout(r, 3000))
+    const check = await axios.get(`${BASE}/${containerId}`, { params: { fields: 'status_code', access_token: accessToken } })
+    status = check.data.status_code
+    if (status === 'ERROR') throw new Error('Instagram image container failed')
+    attempts++
+  }
+  const publishRes = await axios.post(`${BASE}/${igAccountId}/media_publish`, { creation_id: containerId, access_token: accessToken })
+  return { post_id: publishRes.data.id, post_url: `https://www.instagram.com/p/${publishRes.data.id}/` }
+}
+
+module.exports = { getAuthUrl, exchangeCode, getInstagramAccountId, uploadReel, uploadImage }
