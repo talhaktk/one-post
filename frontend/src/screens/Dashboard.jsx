@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Plus, RefreshCw } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
+import api from '../lib/api'
 import LoadingSkeleton from '../components/LoadingSkeleton'
 
 const STATUS_COLORS = { published: '#22c55e', failed: '#ef4444', publishing: '#f59e0b', scheduled: '#3b82f6' }
@@ -19,25 +20,22 @@ export default function Dashboard() {
 
   const loadData = async () => {
     setLoading(true)
-    const [postsRes, pagesRes, tiktokRes, platformsRes] = await Promise.all([
-      supabase.from('posts').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(20),
-      supabase.from('facebook_pages').select('id', { count: 'exact' }).eq('user_id', user.id).eq('is_active', true),
-      supabase.from('tiktok_accounts').select('id', { count: 'exact' }).eq('user_id', user.id).eq('is_active', true),
-      supabase.from('connected_platforms').select('id', { count: 'exact' }).eq('user_id', user.id).eq('is_active', true)
-    ])
-    setStats({
-      total: postsRes.data?.length || 0,
-      platforms: platformsRes.count || 0,
-      fbPages: pagesRes.count || 0,
-      tikTok: tiktokRes.count || 0
-    })
-    const grouped = {}
-    postsRes.data?.forEach(p => {
-      if (!grouped[p.video_id]) grouped[p.video_id] = { ...p, platforms: new Set(), statuses: [] }
-      grouped[p.video_id].platforms.add(p.platform)
-      grouped[p.video_id].statuses.push(p.status)
-    })
-    setPosts(Object.values(grouped).slice(0, 10))
+    try {
+      const [recentRes, pagesRes, tiktokRes, platformsRes] = await Promise.all([
+        api.get(`/posts/${user.id}/recent`),
+        supabase.from('facebook_pages').select('id', { count: 'exact' }).eq('user_id', user.id).eq('is_active', true),
+        supabase.from('tiktok_accounts').select('id', { count: 'exact' }).eq('user_id', user.id).eq('is_active', true),
+        supabase.from('connected_platforms').select('id', { count: 'exact' }).eq('user_id', user.id).eq('is_active', true)
+      ])
+      const videos = recentRes?.videos || []
+      setStats({
+        total: videos.length,
+        platforms: platformsRes.count || 0,
+        fbPages: pagesRes.count || 0,
+        tikTok: tiktokRes.count || 0
+      })
+      setPosts(videos)
+    } catch {}
     setLoading(false)
   }
 
@@ -102,25 +100,33 @@ export default function Dashboard() {
       {loading ? <LoadingSkeleton count={4} /> : posts.length === 0 ? (
         <div className="card" style={{ padding: 32, textAlign: 'center', color: 'rgba(255,255,255,0.4)' }}>
           <div style={{ fontSize: 36, marginBottom: 12 }}>📭</div>
-          <div style={{ fontSize: 14 }}>No posts yet. Upload your first video!</div>
+          <div style={{ fontSize: 14 }}>No uploads yet. Upload your first video or image!</div>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {posts.map(post => {
-            const status = getOverallStatus(post.statuses)
+          {posts.map(video => {
+            const platforms = [...new Set((video.posts || []).map(p => p.platform))]
+            const statuses = (video.posts || []).map(p => p.status)
+            const status = statuses.length === 0 ? 'uploaded' : getOverallStatus(statuses)
+            const isImage = video.media_type === 'image'
+            const preview = video.thumbnail_url || (isImage ? video.original_url : null)
             return (
-              <div key={post.video_id} className="card" style={{ padding: '12px 14px', cursor: 'pointer' }} onClick={() => navigate('/history')}>
+              <div key={video.id} className="card" style={{ padding: '12px 14px', cursor: 'pointer' }} onClick={() => navigate('/history')}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   <div style={{ width: 48, height: 48, borderRadius: 10, background: 'rgba(255,255,255,0.06)', overflow: 'hidden', flexShrink: 0 }}>
-                    {post.thumbnail_url ? <img src={post.thumbnail_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>🎬</div>}
+                    {preview
+                      ? <img src={preview} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>{isImage ? '🖼️' : '🎬'}</div>}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 600, fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{post.title || 'Untitled'}</div>
+                    <div style={{ fontWeight: 600, fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{video.title || 'Untitled'}</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
-                      {[...post.platforms].map(p => <span key={p} style={{ fontSize: 14 }}>{PLATFORM_ICONS[p] || '🔗'}</span>)}
+                      {platforms.length > 0
+                        ? platforms.map(p => <span key={p} style={{ fontSize: 14 }}>{PLATFORM_ICONS[p] || '🔗'}</span>)
+                        : <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)' }}>Not published yet</span>}
                     </div>
                   </div>
-                  <span className={`badge badge-${status}`} style={{ textTransform: 'capitalize' }}>{status}</span>
+                  <span className={`badge badge-${status === 'uploaded' ? 'scheduled' : status}`} style={{ textTransform: 'capitalize', fontSize: 11 }}>{status}</span>
                 </div>
               </div>
             )

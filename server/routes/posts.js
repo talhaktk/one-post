@@ -11,9 +11,20 @@ router.get('/:userId', auth, async (req, res) => {
     .eq('user_id', req.params.userId)
     .order('created_at', { ascending: false })
     .limit(200)
-
   if (error) return res.status(500).json({ error: error.message })
   res.json({ posts: data })
+})
+
+// Recent uploads (videos + their post status) for Dashboard
+router.get('/:userId/recent', auth, async (req, res) => {
+  const { data, error } = await supabase
+    .from('videos')
+    .select('id, title, thumbnail_url, original_url, media_type, created_at, posts(platform, status)')
+    .eq('user_id', req.params.userId)
+    .order('created_at', { ascending: false })
+    .limit(15)
+  if (error) return res.status(500).json({ error: error.message })
+  res.json({ videos: data })
 })
 
 router.post('/:postId/repost', auth, async (req, res) => {

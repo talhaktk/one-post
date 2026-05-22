@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { Upload, Video, Image, X, ChevronRight } from 'lucide-react'
 import ReactPlayer from 'react-player'
 import { usePost } from '../context/PostContext'
+import { useAuth } from '../context/AuthContext'
 import { uploadVideo } from '../lib/api'
 import toast from 'react-hot-toast'
 
@@ -12,6 +13,7 @@ const CATEGORIES = ['Politics', 'News', 'Education', 'Sports', 'Entertainment', 
 export default function UploadVideo() {
   const navigate = useNavigate()
   const { postState, updatePost } = usePost()
+  const { profile } = useAuth()
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
 
@@ -69,7 +71,16 @@ export default function UploadVideo() {
       formData.append('media_type', isImage ? 'image' : 'video')
 
       const { video_id, original_url } = await uploadVideo(formData, setUploadProgress)
-      updatePost({ videoId: video_id, originalUrl: original_url })
+      // Apply profile auto-edit defaults
+      const editOptions = {
+        crop: profile?.auto_crop ?? true,
+        cut: profile?.auto_cut ?? true,
+        captions: profile?.auto_captions ?? false,
+        highlights: profile?.auto_highlights ?? false,
+        thumbnail: profile?.auto_thumbnail ?? true,
+        caption_language: profile?.default_caption_language || 'both'
+      }
+      updatePost({ videoId: video_id, originalUrl: original_url, editOptions })
       navigate(isImage ? '/hashtags' : '/edit')
     } catch (err) {
       toast.error(err.message || 'Upload failed')

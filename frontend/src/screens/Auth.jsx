@@ -12,6 +12,7 @@ export default function Auth() {
   const [name, setName] = useState('')
   const [showPw, setShowPw] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [rememberMe, setRememberMe] = useState(true)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -20,6 +21,7 @@ export default function Auth() {
       if (mode === 'login') {
         const { error } = await supabase.auth.signInWithPassword({ email, password })
         if (error) throw error
+        if (!rememberMe) localStorage.setItem('onepost_session_only', '1')
         navigate('/')
       } else if (mode === 'signup') {
         const { error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: name } } })
@@ -77,9 +79,17 @@ export default function Auth() {
         )}
 
         {mode === 'login' && (
-          <button type="button" onClick={() => setMode('reset')} style={{ background: 'none', border: 'none', color: '#7c3aed', fontSize: 13, cursor: 'pointer', textAlign: 'right', padding: 0 }}>
-            Forgot password?
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }} onClick={() => setRememberMe(r => !r)}>
+              <div style={{ width: 36, height: 20, borderRadius: 10, background: rememberMe ? '#7c3aed' : 'rgba(255,255,255,0.15)', transition: 'background 0.2s', position: 'relative', flexShrink: 0 }}>
+                <div style={{ position: 'absolute', top: 2, left: rememberMe ? 18 : 2, width: 16, height: 16, borderRadius: '50%', background: 'white', transition: 'left 0.2s' }} />
+              </div>
+              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>Stay signed in</span>
+            </div>
+            <button type="button" onClick={() => setMode('reset')} style={{ background: 'none', border: 'none', color: '#7c3aed', fontSize: 13, cursor: 'pointer', padding: 0 }}>
+              Forgot password?
+            </button>
+          </div>
         )}
 
         <button className="btn-primary" type="submit" disabled={loading} style={{ marginTop: 8 }}>
