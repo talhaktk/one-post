@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
-import { Search, Plus, CheckSquare, Square } from 'lucide-react'
+import { Search, Plus, CheckSquare, ArrowLeft } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import PlatformCard from '../components/PlatformCard'
 import FacebookPageItem from '../components/FacebookPageItem'
@@ -11,6 +12,7 @@ import { getOAuthUrl, syncFacebookPages } from '../lib/api'
 
 export default function ConnectAccounts() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [platforms, setPlatforms] = useState({})
   const [fbPages, setFbPages] = useState([])
   const [tikTokAccounts, setTikTokAccounts] = useState([])
@@ -90,9 +92,14 @@ export default function ConnectAccounts() {
 
   return (
     <div style={{ padding: '0 16px 16px' }}>
-      <div style={{ padding: '20px 0 16px' }}>
-        <div style={{ fontSize: 22, fontFamily: 'Syne', fontWeight: 800 }}>Connected Accounts</div>
-        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>Manage your platform connections</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '20px 0 16px' }}>
+        <button onClick={() => navigate('/settings')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'white', padding: 4 }}>
+          <ArrowLeft size={20} />
+        </button>
+        <div>
+          <div style={{ fontSize: 22, fontFamily: 'Syne', fontWeight: 800 }}>Connected Accounts</div>
+          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>Manage your platform connections</div>
+        </div>
       </div>
 
       {/* Tab bar */}
