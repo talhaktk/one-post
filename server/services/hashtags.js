@@ -4,12 +4,26 @@ const Anthropic = require('@anthropic-ai/sdk')
 
 const getAnthropic = () => new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || 'placeholder' })
 
+const getTwitterBearerToken = async () => {
+  if (process.env.TWITTER_BEARER_TOKEN) return process.env.TWITTER_BEARER_TOKEN
+  const cfg = require('./configService')
+  const clientId = await cfg.get('TWITTER_CLIENT_ID')
+  const clientSecret = await cfg.get('TWITTER_CLIENT_SECRET')
+  if (!clientId || !clientSecret) return null
+  const creds = Buffer.from(`${clientId}:${clientSecret}`).toString('base64')
+  const res = await axios.post('https://api.twitter.com/oauth2/token',
+    'grant_type=client_credentials',
+    { headers: { Authorization: `Basic ${creds}`, 'Content-Type': 'application/x-www-form-urlencoded' } }
+  )
+  return res.data.access_token
+}
+
 const fetchTwitterTrends = async () => {
-  // Twitter Trends API for Pakistan (WOEID: 23424922)
-  // Requires Twitter API v1.1 Bearer token — use app-only auth
   try {
+    const token = await getTwitterBearerToken()
+    if (!token) return []
     const res = await axios.get('https://api.twitter.com/1.1/trends/place.json?id=23424922', {
-      headers: { Authorization: `Bearer ${process.env.TWITTER_BEARER_TOKEN}` }
+      headers: { Authorization: `Bearer ${token}` }
     })
     const trends = res.data[0]?.trends || []
     return trends.slice(0, 20).map(t => ({ tag: t.name.replace(/^#/, ''), volume: t.tweet_volume || 0 }))

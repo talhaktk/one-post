@@ -23,7 +23,7 @@ router.post('/', auth, async (req, res) => {
   }
 })
 
-router.get('/progress/:jobId', auth, (req, res) => {
+router.get('/progress/:jobId', (req, res) => {
   const { jobId } = req.params
 
   res.setHeader('Content-Type', 'text/event-stream')
