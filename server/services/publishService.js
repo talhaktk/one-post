@@ -1,11 +1,10 @@
-const { createClient } = require('@supabase/supabase-js')
 const { wait } = require('./helpers')
 const path = require('path')
 const os = require('os')
 const fs = require('fs')
 const { v4: uuidv4 } = require('uuid')
 
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
+const supabase = require('../lib/supabase')
 
 // Global SSE clients store
 if (!global.sseProgressClients) global.sseProgressClients = {}

@@ -1,9 +1,8 @@
 const express = require('express')
 const auth = require('../middleware/auth')
-const { createClient } = require('@supabase/supabase-js')
 
 const router = express.Router()
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
+const supabase = require('../lib/supabase')
 
 router.get('/:userId', auth, async (req, res) => {
   const { data, error } = await supabase

@@ -1,11 +1,10 @@
 const axios = require('axios')
 const xml2js = require('xml2js')
 const Anthropic = require('@anthropic-ai/sdk')
-const { createClient } = require('@supabase/supabase-js')
 const thumbnailGenerator = require('./thumbnailGenerator')
 const pushNotification = require('./pushNotification')
 
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
+const supabase = require('../lib/supabase')
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 let isRunning = false

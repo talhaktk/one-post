@@ -16,8 +16,7 @@ try {
 
 const sendBreakingAlert = async (alert) => {
   if (!admin?.apps?.length) return
-  const { createClient } = require('@supabase/supabase-js')
-  const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
+    const supabase = require('../lib/supabase')
 
   // Get all FCM tokens
   const { data: users } = await supabase.from('users').select('fcm_token').not('fcm_token', 'is', null)

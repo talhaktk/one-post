@@ -1,11 +1,10 @@
 const { createCanvas, loadImage } = require('canvas')
-const { createClient } = require('@supabase/supabase-js')
 const { v4: uuidv4 } = require('uuid')
 const fs = require('fs')
 const os = require('os')
 const path = require('path')
 
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
+const supabase = require('../lib/supabase')
 
 const PRIORITY_COLORS = {
   urgent: '#CC0000',

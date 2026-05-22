@@ -5,11 +5,10 @@ const path = require('path')
 const fs = require('fs')
 const { v4: uuidv4 } = require('uuid')
 const auth = require('../middleware/auth')
-const { createClient } = require('@supabase/supabase-js')
 const { publishJob } = require('../services/publishService')
 
 const router = express.Router()
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
+const supabase = require('../lib/supabase')
 const upload = multer({ storage: multer.diskStorage({ destination: os.tmpdir(), filename: (req, f, cb) => cb(null, `sched_${uuidv4()}${path.extname(f.originalname)}`) }) })
 
 router.post('/create', auth, upload.single('video'), async (req, res) => {
