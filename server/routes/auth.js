@@ -57,11 +57,13 @@ async function handleCallback(platform, { code, state, user_id }, stored) {
 
   if (basePlatform === 'facebook') {
     const tokens = await OAUTH_PROVIDERS.facebook.exchangeCode(code)
-    const { data: platformData } = await supabase.from('connected_platforms').upsert({
+    const { data: platformData, error: upsertErr } = await supabase.from('connected_platforms').upsert({
       user_id, platform: 'facebook',
       access_token: tokens.access_token,
       is_active: true, connected_at: new Date().toISOString()
     }, { onConflict: 'user_id,platform' }).select('id').single()
+
+    if (upsertErr) throw new Error('DB save failed: ' + upsertErr.message)
 
     const pages = await OAUTH_PROVIDERS.facebook.getAllPages(tokens.access_token)
     if (pages.length && platformData?.id) {
