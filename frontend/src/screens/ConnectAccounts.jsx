@@ -65,7 +65,7 @@ export default function ConnectAccounts() {
       toast.success('Facebook pages synced!')
       loadAll()
     } catch (err) {
-      toast.error(err.message || 'Failed to sync pages')
+      toast.error(err?.error || err?.message || 'Failed to sync pages')
     } finally {
       setConnectLoading(prev => ({ ...prev, fb_sync: false }))
     }
