@@ -65,7 +65,8 @@ const publishJob = async (jobId, payload, userId) => {
 
   const results = []
 
-  try { for (const target of targets) {
+  try {
+  for (const target of targets) {
     const { platform, clip_id, page_ids, account_ids } = target
 
     if (platform === 'youtube') {
@@ -196,8 +197,7 @@ const publishJob = async (jobId, payload, userId) => {
       }
     }
   }
-
-  } } catch (err) {
+  } catch (err) {
     console.error('publishJob fatal error:', err.message)
   } finally {
     emit(jobId, { type: 'done', results })
