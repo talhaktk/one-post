@@ -25,15 +25,22 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        navigateFallback: 'index.html',
+        navigateFallbackDenylist: [/^\/api/],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
             handler: 'NetworkFirst',
             options: { cacheName: 'supabase-cache', networkTimeoutSeconds: 10 }
+          },
+          {
+            urlPattern: ({ url }) => url.pathname.startsWith('/api'),
+            handler: 'NetworkOnly'
           }
         ],
         skipWaiting: true,
-        clientsClaim: true
+        clientsClaim: true,
+        cleanupOutdatedCaches: true
       },
       devOptions: { enabled: true }
     })

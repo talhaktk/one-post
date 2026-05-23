@@ -17,12 +17,22 @@ router.get('/:userId', auth, async (req, res) => {
 
 // Recent uploads (videos + their post status) for Dashboard
 router.get('/:userId/recent', auth, async (req, res) => {
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from('videos')
     .select('id, title, thumbnail_url, original_url, media_type, created_at, posts(platform, status)')
     .eq('user_id', req.params.userId)
     .order('created_at', { ascending: false })
     .limit(15)
+
+  if (error && error.message && error.message.includes('media_type')) {
+    ;({ data, error } = await supabase
+      .from('videos')
+      .select('id, title, thumbnail_url, original_url, created_at, posts(platform, status)')
+      .eq('user_id', req.params.userId)
+      .order('created_at', { ascending: false })
+      .limit(15))
+  }
+
   if (error) return res.status(500).json({ error: error.message })
   res.json({ videos: data })
 })
@@ -30,12 +40,24 @@ router.get('/:userId/recent', auth, async (req, res) => {
 // Full history — all uploads with nested post statuses
 router.get('/:userId/history', auth, async (req, res) => {
   const { status, platform } = req.query
-  const { data, error } = await supabase
+
+  // Try with media_type; fall back without it if column not yet migrated
+  let { data, error } = await supabase
     .from('videos')
     .select('id, title, thumbnail_url, original_url, media_type, created_at, posts(id, platform, status, target_name, platform_post_url, created_at)')
     .eq('user_id', req.params.userId)
     .order('created_at', { ascending: false })
     .limit(200)
+
+  if (error && error.message && error.message.includes('media_type')) {
+    ;({ data, error } = await supabase
+      .from('videos')
+      .select('id, title, thumbnail_url, original_url, created_at, posts(id, platform, status, target_name, platform_post_url, created_at)')
+      .eq('user_id', req.params.userId)
+      .order('created_at', { ascending: false })
+      .limit(200))
+  }
+
   if (error) return res.status(500).json({ error: error.message })
 
   let videos = data || []
