@@ -37,18 +37,26 @@ router.post('/upload', auth, upload.single('video'), async (req, res) => {
     const storagePath = `${bucket}/${req.user.id}/${uuidv4()}${path.extname(file.originalname)}`
 
     const { error: uploadErr } = await supabase.storage.from(bucket).upload(storagePath, fileBuffer, { contentType: file.mimetype })
-    if (uploadErr) throw uploadErr
+    if (uploadErr) throw new Error(`Storage upload failed (bucket="${bucket}"): ${uploadErr.message}. Make sure the "${bucket}" bucket exists in Supabase Storage.`)
 
     const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(storagePath)
 
-    const { data: videoData, error: insertErr } = await supabase.from('videos').insert({
+    const baseRecord = {
       user_id: req.user.id,
       original_url: urlData.publicUrl,
       title, description, category,
       duration_seconds: duration,
-      file_size_mb: parseFloat((file.size / 1024 / 1024).toFixed(2)),
-      media_type
-    }).select().single()
+      file_size_mb: parseFloat((file.size / 1024 / 1024).toFixed(2))
+    }
+
+    // Try with media_type; if column missing, insert without it
+    let { data: videoData, error: insertErr } = await supabase.from('videos')
+      .insert({ ...baseRecord, media_type }).select().single()
+
+    if (insertErr && insertErr.message && insertErr.message.includes('media_type')) {
+      ;({ data: videoData, error: insertErr } = await supabase.from('videos')
+        .insert(baseRecord).select().single())
+    }
 
     if (insertErr) throw new Error('DB insert failed: ' + insertErr.message)
 
