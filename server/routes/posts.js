@@ -27,6 +27,38 @@ router.get('/:userId/recent', auth, async (req, res) => {
   res.json({ videos: data })
 })
 
+// Full history — all uploads with nested post statuses
+router.get('/:userId/history', auth, async (req, res) => {
+  const { status, platform } = req.query
+  const { data, error } = await supabase
+    .from('videos')
+    .select('id, title, thumbnail_url, original_url, media_type, created_at, posts(id, platform, status, target_name, platform_post_url, created_at)')
+    .eq('user_id', req.params.userId)
+    .order('created_at', { ascending: false })
+    .limit(200)
+  if (error) return res.status(500).json({ error: error.message })
+
+  let videos = data || []
+
+  if (status && status !== 'all') {
+    videos = videos.filter(v => {
+      const statuses = (v.posts || []).map(p => p.status)
+      if (status === 'uploaded') return statuses.length === 0
+      if (status === 'published') return statuses.length > 0 && statuses.every(s => s === 'published')
+      if (status === 'failed') return statuses.includes('failed') && !statuses.includes('published')
+      if (status === 'publishing') return statuses.includes('publishing')
+      if (status === 'scheduled') return statuses.every(s => s === 'scheduled')
+      return true
+    })
+  }
+
+  if (platform && platform !== 'all') {
+    videos = videos.filter(v => (v.posts || []).some(p => p.platform === platform || p.platform.startsWith(platform)))
+  }
+
+  res.json({ videos })
+})
+
 router.post('/:postId/repost', auth, async (req, res) => {
   try {
     const { data: post } = await supabase.from('posts').select('*').eq('id', req.params.postId).eq('user_id', req.user.id).single()

@@ -10,6 +10,19 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
+      // If "stay signed in" was off, sign out when app is reopened (session-only mode)
+      if (session && localStorage.getItem('onepost_session_only') === '1') {
+        const lastActive = parseInt(localStorage.getItem('onepost_last_active') || '0')
+        const idleMs = Date.now() - lastActive
+        if (lastActive && idleMs > 30 * 60 * 1000) {
+          supabase.auth.signOut()
+          localStorage.removeItem('onepost_session_only')
+          localStorage.removeItem('onepost_last_active')
+          setLoading(false)
+          return
+        }
+      }
+      if (session) localStorage.setItem('onepost_last_active', Date.now().toString())
       setUser(session?.user ?? null)
       if (session?.user) fetchProfile(session.user.id)
       else setLoading(false)

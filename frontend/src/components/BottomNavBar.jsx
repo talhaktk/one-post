@@ -11,14 +11,16 @@ export default function BottomNavBar() {
 
   useEffect(() => {
     if (!user) return
-    supabase.from('breaking_alerts').select('id', { count: 'exact' })
-      .eq('status', 'pending').then(({ count }) => setUnreadAlerts(count || 0))
+    const fetchCount = () => {
+      supabase.from('breaking_alerts').select('id', { count: 'exact', head: true })
+        .eq('status', 'pending')
+        .then(({ count, error }) => { if (!error) setUnreadAlerts(count || 0) })
+    }
+    fetchCount()
 
-    const channel = supabase.channel('alerts-count').on('postgres_changes',
-      { event: '*', schema: 'public', table: 'breaking_alerts' },
-      () => supabase.from('breaking_alerts').select('id', { count: 'exact' }).eq('status', 'pending')
-        .then(({ count }) => setUnreadAlerts(count || 0))
-    ).subscribe()
+    const channel = supabase.channel('alerts-count')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'breaking_alerts' }, fetchCount)
+      .subscribe(status => { if (status === 'CHANNEL_ERROR') supabase.removeChannel(channel) })
 
     return () => supabase.removeChannel(channel)
   }, [user])
