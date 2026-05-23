@@ -28,8 +28,12 @@ router.post('/upload', auth, upload.single('video'), async (req, res) => {
     const isImage = media_type === 'image'
     let duration = 0
     if (!isImage) {
-      const videoInfo = await getVideoInfo(file.path)
-      duration = Math.round(videoInfo.duration || 0)
+      try {
+        const videoInfo = await getVideoInfo(file.path)
+        duration = Math.round(videoInfo.duration || 0)
+      } catch (e) {
+        console.warn('ffprobe failed, defaulting duration to 0:', e.message)
+      }
     }
 
     const fileBuffer = fs.readFileSync(file.path)
