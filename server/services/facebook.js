@@ -35,10 +35,16 @@ const getAllPages = async (accessToken) => {
 }
 
 const uploadVideoToPageByUrl = async (pageAccessToken, pageId, { videoUrl, title, description }) => {
-  const res = await axios.post(`${BASE}/${pageId}/videos`, null, {
-    params: { file_url: videoUrl, title: title || '', description: description || '', published: 'true', access_token: pageAccessToken }
-  })
-  return { post_id: res.data.id, post_url: `https://www.facebook.com/${pageId}/videos/${res.data.id}` }
+  try {
+    const res = await axios.post(`${BASE}/${pageId}/videos`, null, {
+      params: { file_url: videoUrl, title: title || '', description: description || '', published: 'true', access_token: pageAccessToken }
+    })
+    return { post_id: res.data.id, post_url: `https://www.facebook.com/${pageId}/videos/${res.data.id}` }
+  } catch (err) {
+    const fbErr = err.response?.data?.error
+    const msg = fbErr ? `${fbErr.message} (FB code ${fbErr.code})` : err.message
+    throw new Error(msg)
+  }
 }
 
 const uploadVideoToPage = async (pageAccessToken, pageId, { videoPath, title, description }) => {
@@ -105,10 +111,16 @@ const uploadToAllPages = async (pages, videoPath, title, description, delaySecon
 }
 
 const uploadPhotoToPage = async (pageAccessToken, pageId, { imageUrl, caption }) => {
-  const res = await axios.post(`${BASE}/${pageId}/photos`, null, {
-    params: { url: imageUrl, caption: caption || '', access_token: pageAccessToken }
-  })
-  return { post_id: res.data.id, post_url: `https://www.facebook.com/${pageId}/posts/${res.data.post_id || res.data.id}` }
+  try {
+    const res = await axios.post(`${BASE}/${pageId}/photos`, null, {
+      params: { url: imageUrl, caption: caption || '', access_token: pageAccessToken }
+    })
+    return { post_id: res.data.id, post_url: `https://www.facebook.com/${pageId}/posts/${res.data.post_id || res.data.id}` }
+  } catch (err) {
+    const fbErr = err.response?.data?.error
+    const msg = fbErr ? `${fbErr.message} (FB code ${fbErr.code})` : err.message
+    throw new Error(msg)
+  }
 }
 
 const uploadPhotosToAllPages = async (pages, imageUrl, caption, delaySeconds = 30, onProgress) => {

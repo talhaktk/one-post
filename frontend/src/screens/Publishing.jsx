@@ -93,7 +93,18 @@ export default function Publishing() {
       try {
         const data = JSON.parse(e.data)
         if (data.type === 'progress') {
-          setTargets(prev => prev.map(t => t.id === data.target_id || t.platform === data.platform ? { ...t, ...data } : t))
+          setTargets(prev => {
+            const hasExactMatch = prev.some(t => t.id === data.target_id)
+            if (hasExactMatch) {
+              return prev.map(t => t.id === data.target_id ? { ...t, ...data } : t)
+            }
+            // No ID match — for single-account platforms match by platform, otherwise add new card
+            const multiAccountPlatforms = ['facebook', 'tiktok']
+            if (!multiAccountPlatforms.includes(data.platform)) {
+              return prev.map(t => t.platform === data.platform ? { ...t, ...data } : t)
+            }
+            return [...prev, { id: data.target_id, ...data }]
+          })
         }
         if (data.type === 'done') { setDone(true); es.close() }
         if (data.type === 'countdown') {

@@ -6,6 +6,21 @@ const { v4: uuidv4 } = require('uuid')
 
 const supabase = require('../lib/supabase')
 
+// Returns a 1-hour signed URL for a Supabase storage file (works even if bucket is private)
+const getSignedUrl = async (publicUrl, expiresIn = 3600) => {
+  try {
+    const match = publicUrl.match(/\/storage\/v1\/object\/(?:public\/)?([^?#]+)/)
+    if (!match) return publicUrl
+    const parts = match[1].split('/')
+    const bucket = parts[0]
+    const filePath = parts.slice(1).join('/')
+    const { data } = await supabase.storage.from(bucket).createSignedUrl(filePath, expiresIn)
+    return data?.signedUrl || publicUrl
+  } catch {
+    return publicUrl
+  }
+}
+
 // Global SSE clients store
 if (!global.sseProgressClients) global.sseProgressClients = {}
 
@@ -130,10 +145,10 @@ const publishJob = async (jobId, payload, userId) => {
             const caption = `${title}\n\n${description || ''}\n${tags}`
             fbResults = await fb.uploadPhotosToAllPages(pages, imageUrl, caption, post_delay_seconds, (event) => emit(jobId, event))
           } else {
-            // Use URL-based upload — no need to download video to Railway
+            // Generate signed URL so Facebook can fetch even if bucket is private
             const { data: vid } = await supabase.from('videos').select('original_url').eq('id', video_id).single()
-            const videoUrl = vid?.original_url
-            if (!videoUrl) throw new Error('Video URL not found')
+            if (!vid?.original_url) throw new Error('Video URL not found')
+            const videoUrl = await getSignedUrl(vid.original_url)
             const fullDesc = `${description || ''}\n${tags}`
             fbResults = await fb.uploadToAllPagesByUrl(pages, videoUrl, title, fullDesc, post_delay_seconds, (event) => emit(jobId, event))
           }
