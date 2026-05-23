@@ -65,7 +65,7 @@ const publishJob = async (jobId, payload, userId) => {
 
   const results = []
 
-  for (const target of targets) {
+  try { for (const target of targets) {
     const { platform, clip_id, page_ids, account_ids } = target
 
     if (platform === 'youtube') {
@@ -118,28 +118,52 @@ const publishJob = async (jobId, payload, userId) => {
     }
 
     if (platform === 'facebook' && page_ids?.length) {
-      const { data: pages } = await supabase.from('facebook_pages').select('*').eq('user_id', userId).in('page_id', page_ids).eq('is_active', true)
-      if (pages?.length) {
-        const fb = require('./facebook')
-        if (isImage) {
-          const imageUrl = await getImageUrl(video_id)
-          const caption = `${title}\n\n${description || ''}\n${(hashtags_per_platform?.facebook || []).map(t => `#${t}`).join(' ')}`
-          await fb.uploadPhotosToAllPages(pages, imageUrl, caption, post_delay_seconds, (event) => emit(jobId, event))
-        } else {
-          const filePath = await getClipPath(clip_id, 'facebook', video_id)
-          await fb.uploadToAllPages(pages, filePath, title, description, post_delay_seconds, (event) => emit(jobId, event))
-          fs.unlinkSync(filePath)
+      try {
+        const { data: pages } = await supabase.from('facebook_pages').select('*').eq('user_id', userId).in('page_id', page_ids).eq('is_active', true)
+        if (pages?.length) {
+          const fb = require('./facebook')
+          const tags = (hashtags_per_platform?.facebook || []).map(t => `#${t}`).join(' ')
+          let fbResults = []
+          if (isImage) {
+            const imageUrl = await getImageUrl(video_id)
+            const caption = `${title}\n\n${description || ''}\n${tags}`
+            fbResults = await fb.uploadPhotosToAllPages(pages, imageUrl, caption, post_delay_seconds, (event) => emit(jobId, event))
+          } else {
+            // Use URL-based upload — no need to download video to Railway
+            const { data: vid } = await supabase.from('videos').select('original_url').eq('id', video_id).single()
+            const videoUrl = vid?.original_url
+            if (!videoUrl) throw new Error('Video URL not found')
+            const fullDesc = `${description || ''}\n${tags}`
+            fbResults = await fb.uploadToAllPagesByUrl(pages, videoUrl, title, fullDesc, post_delay_seconds, (event) => emit(jobId, event))
+          }
+          // Save results to DB
+          for (const r of fbResults) {
+            await supabase.from('posts').insert({ video_id, user_id: userId, platform: 'facebook', target_id: r.page_id, target_name: r.page_name, status: r.status, published_at: r.status === 'published' ? new Date().toISOString() : null, platform_post_url: r.post_url || null, error_message: r.error || null })
+          }
+          results.push(...fbResults.map(r => ({ platform: 'facebook', ...r })))
         }
+      } catch (err) {
+        console.error('Facebook publish error:', err.message)
+        emit(jobId, { type: 'progress', platform: 'facebook', target_id: 'fb_error', target_name: 'Facebook', status: 'failed', error_message: err.message })
+        results.push({ platform: 'facebook', status: 'failed', error: err.message })
+        await supabase.from('posts').insert({ video_id, user_id: userId, platform: 'facebook', status: 'failed', error_message: err.message }).catch(() => {})
       }
     }
 
     if (platform === 'tiktok' && account_ids?.length) {
-      const { data: accounts } = await supabase.from('tiktok_accounts').select('*').eq('user_id', userId).in('id', account_ids).eq('is_active', true)
-      if (accounts?.length) {
-        const filePath = await getClipPath(clip_id, 'tiktok', video_id)
-        const tiktok = require('./tiktok')
-        await tiktok.uploadToAllAccounts(accounts, filePath, title, description, hashtags_per_platform?.tiktok || [], post_delay_seconds, (event) => emit(jobId, event))
-        fs.unlinkSync(filePath)
+      try {
+        const { data: accounts } = await supabase.from('tiktok_accounts').select('*').eq('user_id', userId).in('id', account_ids).eq('is_active', true)
+        if (accounts?.length) {
+          const filePath = await getClipPath(clip_id, 'tiktok', video_id)
+          const tiktok = require('./tiktok')
+          await tiktok.uploadToAllAccounts(accounts, filePath, title, description, hashtags_per_platform?.tiktok || [], post_delay_seconds, (event) => emit(jobId, event))
+          fs.unlinkSync(filePath)
+        }
+      } catch (err) {
+        console.error('TikTok publish error:', err.message)
+        emit(jobId, { type: 'progress', platform: 'tiktok', target_id: 'tiktok_error', target_name: 'TikTok', status: 'failed', error_message: err.message })
+        results.push({ platform: 'tiktok', status: 'failed', error: err.message })
+        await supabase.from('posts').insert({ video_id, user_id: userId, platform: 'tiktok', status: 'failed', error_message: err.message }).catch(() => {})
       }
     }
 
@@ -173,9 +197,12 @@ const publishJob = async (jobId, payload, userId) => {
     }
   }
 
-  emit(jobId, { type: 'done', results })
-  // Clean up SSE clients after delay
-  setTimeout(() => { delete global.sseProgressClients[jobId] }, 30000)
+  } } catch (err) {
+    console.error('publishJob fatal error:', err.message)
+  } finally {
+    emit(jobId, { type: 'done', results })
+    setTimeout(() => { delete global.sseProgressClients[jobId] }, 30000)
+  }
   return results
 }
 

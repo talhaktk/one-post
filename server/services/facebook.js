@@ -34,6 +34,13 @@ const getAllPages = async (accessToken) => {
   return pages
 }
 
+const uploadVideoToPageByUrl = async (pageAccessToken, pageId, { videoUrl, title, description }) => {
+  const res = await axios.post(`${BASE}/${pageId}/videos`, null, {
+    params: { file_url: videoUrl, title: title || '', description: description || '', published: 'true', access_token: pageAccessToken }
+  })
+  return { post_id: res.data.id, post_url: `https://www.facebook.com/${pageId}/videos/${res.data.id}` }
+}
+
 const uploadVideoToPage = async (pageAccessToken, pageId, { videoPath, title, description }) => {
   const FormData = require('form-data')
   const formData = new FormData()
@@ -47,6 +54,29 @@ const uploadVideoToPage = async (pageAccessToken, pageId, { videoPath, title, de
     maxContentLength: Infinity, maxBodyLength: Infinity
   })
   return { post_id: res.data.id, post_url: `https://www.facebook.com/${pageId}/videos/${res.data.id}` }
+}
+
+const uploadToAllPagesByUrl = async (pages, videoUrl, title, description, delaySeconds = 30, onProgress) => {
+  const results = []
+  for (let i = 0; i < pages.length; i++) {
+    const page = pages[i]
+    if (i > 0) {
+      for (let countdown = delaySeconds; countdown > 0; countdown--) {
+        onProgress && onProgress({ type: 'countdown', target_id: `fb_${page.page_id}`, countdown, next_page: pages[i]?.page_name })
+        await wait(1)
+      }
+    }
+    try {
+      onProgress && onProgress({ type: 'progress', platform: 'facebook', target_id: `fb_${page.page_id}`, target_name: page.page_name, status: 'uploading', progress: 20 })
+      const result = await retry(() => uploadVideoToPageByUrl(page.page_access_token, page.page_id, { videoUrl, title, description }), 3, 60)
+      results.push({ page_id: page.page_id, page_name: page.page_name, status: 'published', ...result })
+      onProgress && onProgress({ type: 'progress', platform: 'facebook', target_id: `fb_${page.page_id}`, target_name: page.page_name, status: 'published', progress: 100, post_url: result.post_url })
+    } catch (err) {
+      results.push({ page_id: page.page_id, page_name: page.page_name, status: 'failed', error: err.message })
+      onProgress && onProgress({ type: 'progress', platform: 'facebook', target_id: `fb_${page.page_id}`, target_name: page.page_name, status: 'failed', error_message: err.message })
+    }
+  }
+  return results
 }
 
 const uploadToAllPages = async (pages, videoPath, title, description, delaySeconds = 30, onProgress) => {
@@ -106,4 +136,4 @@ const uploadPhotosToAllPages = async (pages, imageUrl, caption, delaySeconds = 3
   return results
 }
 
-module.exports = { getAuthUrl, exchangeCode, getAllPages, uploadVideoToPage, uploadToAllPages, uploadPhotoToPage, uploadPhotosToAllPages }
+module.exports = { getAuthUrl, exchangeCode, getAllPages, uploadVideoToPageByUrl, uploadVideoToPage, uploadToAllPagesByUrl, uploadToAllPages, uploadPhotoToPage, uploadPhotosToAllPages }

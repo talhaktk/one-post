@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { RefreshCw, ExternalLink, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { RefreshCw, ExternalLink, Trash2, ChevronDown, ChevronUp, ArrowLeft } from 'lucide-react'
 import api from '../lib/api'
 import { supabase } from '../lib/supabase'
 import LoadingSkeleton from '../components/LoadingSkeleton'
@@ -20,6 +21,7 @@ function getOverallStatus(posts) {
 
 export default function History() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [videos, setVideos] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all')
@@ -56,9 +58,14 @@ export default function History() {
   return (
     <div style={{ padding: '0 16px 16px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 0 16px' }}>
-        <div>
-          <div style={{ fontSize: 22, fontFamily: 'Syne', fontWeight: 800 }}>Upload History</div>
-          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>{videos.length} uploads</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', padding: 0 }}>
+            <ArrowLeft size={22} />
+          </button>
+          <div>
+            <div style={{ fontSize: 22, fontFamily: 'Syne', fontWeight: 800 }}>Upload History</div>
+            <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>{videos.length} uploads</div>
+          </div>
         </div>
         <button onClick={loadHistory} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', padding: 4 }}>
           <RefreshCw size={18} />
