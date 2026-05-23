@@ -81,65 +81,89 @@ router.post('/process', auth, async (req, res) => {
     const platforms = ['youtube', 'youtube_short', 'instagram_reels', 'instagram_feed', 'facebook', 'tiktok', 'twitter']
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'onepost-process-'))
 
-    // Download original
-    const fetch = require('node-fetch')
-    const origResponse = await fetch(video.original_url)
-    const origPath = path.join(tmpDir, 'original.mp4')
-    fs.writeFileSync(origPath, await origResponse.buffer())
-
     const clips = []
     let thumbnails = []
+    let origPath = null
+
+    // Download original video
+    try {
+      const fetch = require('node-fetch')
+      const origResponse = await fetch(video.original_url)
+      origPath = path.join(tmpDir, 'original.mp4')
+      fs.writeFileSync(origPath, await origResponse.buffer())
+    } catch (e) {
+      console.error('Download failed:', e.message)
+      fs.rmSync(tmpDir, { recursive: true, force: true })
+      return res.json({ clips: [], thumbnails: [], highlights: null, warning: 'Could not download original video for processing' })
+    }
+
     let srtPath = null
 
     // Generate captions if requested
     if (captions) {
-      const audioPath = path.join(tmpDir, 'audio.mp3')
-      await extractAudio(origPath, audioPath)
-      srtPath = path.join(tmpDir, 'captions.srt')
-      await generateSRT(audioPath, srtPath, caption_language)
+      try {
+        const audioPath = path.join(tmpDir, 'audio.mp3')
+        await extractAudio(origPath, audioPath)
+        srtPath = path.join(tmpDir, 'captions.srt')
+        await generateSRT(audioPath, srtPath, caption_language)
+      } catch (e) {
+        console.error('Caption generation failed:', e.message)
+        srtPath = null
+      }
     }
 
     // Process per platform
     if (crop || cut) {
       for (const platform of platforms) {
-        const outputPath = path.join(tmpDir, `${platform}.mp4`)
-        let inputPath = origPath
+        try {
+          const outputPath = path.join(tmpDir, `${platform}.mp4`)
+          let inputPath = origPath
 
-        if (captions && srtPath) {
-          const captionedPath = path.join(tmpDir, `${platform}_captioned.mp4`)
-          await burnSubtitles(inputPath, srtPath, captionedPath)
-          inputPath = captionedPath
-        }
+          if (srtPath) {
+            try {
+              const captionedPath = path.join(tmpDir, `${platform}_captioned.mp4`)
+              await burnSubtitles(inputPath, srtPath, captionedPath)
+              inputPath = captionedPath
+            } catch {}
+          }
 
-        await cropAndResize(inputPath, platform, outputPath)
+          await cropAndResize(inputPath, platform, outputPath)
 
-        // Upload to Supabase
-        const clipPath = `clips/${req.user.id}/${video_id}/${platform}_${uuidv4()}.mp4`
-        const { error } = await supabase.storage.from('clips').upload(clipPath, fs.readFileSync(outputPath), { contentType: 'video/mp4' })
-        if (!error) {
-          const { data: { publicUrl } } = supabase.storage.from('clips').getPublicUrl(clipPath)
-          const { data: clipData } = await supabase.from('processed_clips').insert({
-            video_id, platform, clip_url: publicUrl,
-            aspect_ratio: ['youtube', 'facebook', 'twitter'].includes(platform) ? '16:9' : platform === 'instagram_feed' ? '1:1' : '9:16',
-            has_captions: captions,
-            processing_status: 'done'
-          }).select().single()
-          clips.push(clipData)
+          const clipPath = `clips/${req.user.id}/${video_id}/${platform}_${uuidv4()}.mp4`
+          const { error } = await supabase.storage.from('clips').upload(clipPath, fs.readFileSync(outputPath), { contentType: 'video/mp4' })
+          if (!error) {
+            const { data: { publicUrl } } = supabase.storage.from('clips').getPublicUrl(clipPath)
+            const { data: clipData } = await supabase.from('processed_clips').insert({
+              video_id, platform, clip_url: publicUrl,
+              aspect_ratio: ['youtube', 'facebook', 'twitter'].includes(platform) ? '16:9' : platform === 'instagram_feed' ? '1:1' : '9:16',
+              has_captions: !!srtPath,
+              processing_status: 'done'
+            }).select().single()
+            if (clipData) clips.push(clipData)
+          }
+        } catch (e) {
+          console.error(`Platform ${platform} processing failed:`, e.message)
         }
       }
     }
 
     // Thumbnails
     if (thumbnail) {
-      const frames = await extractFrames(origPath, 5)
-      for (const framePath of frames) {
-        const thumbName = `thumbnails/${req.user.id}/${video_id}/${uuidv4()}.jpg`
-        await supabase.storage.from('thumbnails').upload(thumbName, fs.readFileSync(framePath), { contentType: 'image/jpeg' })
-        const { data: { publicUrl } } = supabase.storage.from('thumbnails').getPublicUrl(thumbName)
-        thumbnails.push(publicUrl)
-      }
-      if (thumbnails[0]) {
-        await supabase.from('videos').update({ thumbnail_url: thumbnails[0] }).eq('id', video_id)
+      try {
+        const frames = await extractFrames(origPath, 5)
+        for (const framePath of frames) {
+          try {
+            const thumbName = `thumbnails/${req.user.id}/${video_id}/${uuidv4()}.jpg`
+            await supabase.storage.from('thumbnails').upload(thumbName, fs.readFileSync(framePath), { contentType: 'image/jpeg' })
+            const { data: { publicUrl } } = supabase.storage.from('thumbnails').getPublicUrl(thumbName)
+            thumbnails.push(publicUrl)
+          } catch {}
+        }
+        if (thumbnails[0]) {
+          await supabase.from('videos').update({ thumbnail_url: thumbnails[0] }).eq('id', video_id)
+        }
+      } catch (e) {
+        console.error('Thumbnail generation failed:', e.message)
       }
     }
 

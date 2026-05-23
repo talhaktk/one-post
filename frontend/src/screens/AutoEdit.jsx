@@ -36,20 +36,21 @@ export default function AutoEdit() {
     setProcessing(true)
     setStepsDone({})
     try {
-      // Simulate step-by-step progress via polling/SSE
       const activeSteps = PROGRESS_STEPS.filter(s => postState.editOptions[s.key])
       for (let i = 0; i < activeSteps.length; i++) {
-        await new Promise(r => setTimeout(r, 800))
+        await new Promise(r => setTimeout(r, 600))
         setStepsDone(prev => ({ ...prev, [activeSteps[i].key]: 'processing' }))
       }
       const result = await processVideo(postState.videoId, postState.editOptions)
       updatePost({ processedClips: result.clips || [], thumbnailOptions: result.thumbnails || [], highlights: result.highlights || [] })
       for (const step of activeSteps) setStepsDone(prev => ({ ...prev, [step.key]: 'done' }))
-      await new Promise(r => setTimeout(r, 600))
+      await new Promise(r => setTimeout(r, 500))
       navigate('/hashtags')
     } catch (err) {
-      toast.error(err.message || 'Processing failed')
-      setProcessing(false)
+      // Processing failed — skip and continue with original video
+      toast('Processing unavailable, continuing with original video', { icon: '⚠️' })
+      updatePost({ processedClips: [], thumbnailOptions: [], highlights: [] })
+      navigate('/hashtags')
     }
   }
 
@@ -130,9 +131,14 @@ export default function AutoEdit() {
         ))}
       </div>
 
-      <button className="btn-primary" onClick={handleProcess} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-        Start Processing <ChevronRight size={18} />
-      </button>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <button className="btn-primary" onClick={handleProcess} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+          Start Processing <ChevronRight size={18} />
+        </button>
+        <button onClick={() => navigate('/hashtags')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', fontSize: 14, cursor: 'pointer', padding: '8px 0', textAlign: 'center' }}>
+          Skip → Continue with original video
+        </button>
+      </div>
     </div>
   )
 }
