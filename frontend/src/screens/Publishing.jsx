@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { CheckCircle, Copy, ExternalLink } from 'lucide-react'
+import { Copy, ExternalLink, Calendar, Sparkles, Home, Plus } from 'lucide-react'
 import { usePost } from '../context/PostContext'
-import { useAuth } from '../context/AuthContext'
 import { publishPost, getPublishProgress } from '../lib/api'
 import ProgressCard from '../components/ProgressCard'
 import toast from 'react-hot-toast'
@@ -10,11 +9,10 @@ import toast from 'react-hot-toast'
 export default function Publishing() {
   const navigate = useNavigate()
   const { postState, resetPost } = usePost()
-  const { user } = useAuth()
-  const [jobId, setJobId] = useState(null)
+  const [, setJobId] = useState(null)
   const [targets, setTargets] = useState([])
   const [done, setDone] = useState(false)
-  const [failed, setFailed] = useState(false)
+  const [, setFailed] = useState(false)
   const sseRef = useRef(null)
 
   useEffect(() => { startPublishing() }, [])
@@ -63,7 +61,6 @@ export default function Publishing() {
     if (postState.targets.instagram_reels) t.push({ id: 'ig_reels', platform: 'instagram_reels', target_name: 'Instagram Reels', status: 'queued', progress: 0 })
     if (postState.targets.instagram_feed) t.push({ id: 'ig_feed', platform: 'instagram_feed', target_name: 'Instagram Feed', status: 'queued', progress: 0 })
     if (postState.targets.facebook) {
-      // add wait card first then individual pages
       postState.selectedFacebookPages.slice(0, 3).forEach((pageId, i) => {
         t.push({ id: `fb_${pageId}`, platform: 'facebook', target_name: `Facebook Page ${i + 1}`, status: 'queued', progress: 0 })
       })
@@ -98,7 +95,6 @@ export default function Publishing() {
             if (hasExactMatch) {
               return prev.map(t => t.id === data.target_id ? { ...t, ...data } : t)
             }
-            // No ID match — for single-account platforms match by platform, otherwise add new card
             const multiAccountPlatforms = ['facebook', 'tiktok']
             if (!multiAccountPlatforms.includes(data.platform)) {
               return prev.map(t => t.platform === data.platform ? { ...t, ...data } : t)
@@ -123,74 +119,111 @@ export default function Publishing() {
   const copyAllLinks = () => {
     const links = publishedTargets.map(t => t.post_url).filter(Boolean).join('\n')
     navigator.clipboard.writeText(links)
-    toast.success('All links copied!')
+    toast.success('All links copied')
   }
 
-  if (done) return (
-    <div style={{ padding: '24px 16px', textAlign: 'center' }}>
-      <div style={{ fontSize: 72, marginBottom: 16 }}>{failedTargets.length === 0 ? '🎉' : '⚠️'}</div>
-      <div style={{ fontSize: 24, fontFamily: 'Syne', fontWeight: 800, marginBottom: 8 }}>
-        {failedTargets.length === 0 ? 'All Posted Successfully!' : `Posted with ${failedTargets.length} failures`}
-      </div>
-      <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', marginBottom: 24 }}>
-        {publishedTargets.length} of {totalTargets} published
-      </div>
-
-      <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginBottom: 24 }}>
-        <button onClick={copyAllLinks} className="btn-secondary" style={{ width: 'auto', padding: '10px 20px', display: 'flex', alignItems: 'center', gap: 6 }}>
-          <Copy size={16} /> Copy All Links
-        </button>
-      </div>
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 24, textAlign: 'left' }}>
-        {publishedTargets.map(t => (
-          <div key={t.id} className="card" style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ fontSize: 13, fontWeight: 600 }}>{t.target_name}</div>
-            {t.post_url && <a href={t.post_url} target="_blank" rel="noopener noreferrer" style={{ color: '#7c3aed', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12 }}><ExternalLink size={14} /> View</a>}
+  if (done) {
+    const allOk = failedTargets.length === 0
+    return (
+      <div className="screen-pad">
+        <div style={{ textAlign: 'center', padding: '32px 0 24px' }}>
+          <div className="avatar-icon" style={{
+            margin: '0 auto 18px', width: 64, height: 64,
+            background: allOk ? 'var(--success-soft)' : 'var(--warning-soft)',
+            color: allOk ? 'var(--success)' : 'var(--warning)'
+          }}>
+            <Sparkles size={28} />
           </div>
-        ))}
-        {failedTargets.length > 0 && failedTargets.map(t => (
-          <div key={t.id} className="card" style={{ padding: '12px 14px', border: '1px solid rgba(239,68,68,0.2)' }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: '#f87171' }}>❌ {t.target_name}</div>
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>{t.error_message}</div>
+          <div className="t-display" style={{ marginBottom: 6 }}>
+            {allOk ? 'All posted successfully' : `Posted with ${failedTargets.length} failure${failedTargets.length === 1 ? '' : 's'}`}
           </div>
-        ))}
-      </div>
+          <div className="t-body-sm">
+            <span className="t-mono" style={{ color: 'var(--text-primary)', fontWeight: 600 }}>
+              {publishedTargets.length}
+            </span> of <span className="t-mono" style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{totalTargets}</span> published
+          </div>
+        </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <button className="btn-primary" onClick={() => { resetPost(); navigate('/upload') }}>Post Another Video</button>
-        <button className="btn-secondary" onClick={() => { resetPost(); navigate('/') }}>Back to Home</button>
+        {publishedTargets.length > 0 && (
+          <button onClick={copyAllLinks} className="btn-secondary" style={{ marginBottom: 16 }}>
+            <Copy size={16} /> Copy all links
+          </button>
+        )}
+
+        <div className="stack-sm" style={{ marginBottom: 20 }}>
+          {publishedTargets.map(t => (
+            <div key={t.id} className="card row-between" style={{ padding: '12px 14px' }}>
+              <div className="t-h3 truncate-1">{t.target_name}</div>
+              {t.post_url && (
+                <a
+                  href={t.post_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="row"
+                  style={{ color: 'var(--accent)', fontSize: 13, fontWeight: 600, textDecoration: 'none', gap: 4 }}
+                >
+                  Open <ExternalLink size={13} />
+                </a>
+              )}
+            </div>
+          ))}
+          {failedTargets.map(t => (
+            <div key={t.id} className="card" style={{ padding: '12px 14px', borderColor: 'rgba(239,68,68,0.28)' }}>
+              <div className="t-h3" style={{ color: 'var(--danger)' }}>{t.target_name}</div>
+              {t.error_message && <div className="t-body-sm" style={{ marginTop: 4 }}>{t.error_message}</div>}
+            </div>
+          ))}
+        </div>
+
+        <div className="stack-sm">
+          <button className="btn-primary" onClick={() => { resetPost(); navigate('/upload') }}>
+            <Plus size={16} /> Post another
+          </button>
+          <button className="btn-secondary" onClick={() => { resetPost(); navigate('/') }}>
+            <Home size={16} /> Back to home
+          </button>
+        </div>
       </div>
-    </div>
-  )
+    )
+  }
 
   const publishedCount = targets.filter(t => t.status === 'published').length
   const totalCount = targets.filter(t => t.id !== 'fb_more').length
   const activeTarget = targets.find(t => t.status === 'uploading' || t.status === 'processing')
+  const progressPct = totalCount ? Math.round((publishedCount / totalCount) * 100) : 0
 
   return (
-    <div style={{ padding: '0 16px 16px' }}>
-      <div style={{ padding: '20px 0 16px' }}>
-        <div style={{ fontSize: 22, fontFamily: 'Syne', fontWeight: 800 }}>Publishing...</div>
-        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>
-          {publishedCount}/{totalCount} published
-          {activeTarget && <> · Next: {activeTarget.target_name}</>}
+    <div className="screen-pad">
+      <div style={{ marginBottom: 20 }}>
+        <div className="t-label" style={{ marginBottom: 6 }}>Publishing</div>
+        <div className="t-display">Sending to platforms…</div>
+        <div className="row-between" style={{ marginTop: 8 }}>
+          <div className="t-body-sm">
+            <span className="t-mono" style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{publishedCount}</span>
+            <span> / </span>
+            <span className="t-mono" style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{totalCount}</span>
+            <span> published</span>
+            {activeTarget && <span className="t-muted"> · next: {activeTarget.target_name}</span>}
+          </div>
+          <div className="t-mono" style={{ fontSize: 13, color: 'var(--accent)', fontWeight: 600 }}>{progressPct}%</div>
         </div>
         <div className="progress-bar" style={{ marginTop: 10 }}>
-          <div className="progress-fill" style={{ width: `${(publishedCount / Math.max(totalCount, 1)) * 100}%` }} />
+          <div className="progress-fill" style={{ width: `${progressPct}%` }} />
         </div>
       </div>
 
       {postState.scheduledAt ? (
-        <div className="card" style={{ padding: '20px', textAlign: 'center', marginBottom: 20 }}>
-          <div style={{ fontSize: 32, marginBottom: 10 }}>📅</div>
-          <div style={{ fontSize: 16, fontWeight: 700 }}>Scheduled Successfully</div>
-          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginTop: 6 }}>
-            Will publish at {new Date(postState.scheduledAt).toLocaleString('en-PK', { timeZone: 'Asia/Karachi' })} PKT
+        <div className="card" style={{ padding: 24, textAlign: 'center' }}>
+          <div className="avatar-icon" style={{ margin: '0 auto 14px', width: 56, height: 56 }}>
+            <Calendar size={24} />
+          </div>
+          <div className="t-h2" style={{ marginBottom: 6 }}>Scheduled successfully</div>
+          <div className="t-body-sm">
+            Publishing at {new Date(postState.scheduledAt).toLocaleString('en-PK', { timeZone: 'Asia/Karachi' })} PKT
           </div>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+        <div className="stack-sm">
           {targets.map(t => <ProgressCard key={t.id} target={t} />)}
         </div>
       )}

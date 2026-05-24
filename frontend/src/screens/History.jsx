@@ -1,14 +1,28 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
-import { RefreshCw, ExternalLink, Trash2, ChevronDown, ChevronUp, ArrowLeft } from 'lucide-react'
+import { RefreshCw, ExternalLink, Trash2, ChevronDown, ChevronUp, ArrowLeft, Inbox } from 'lucide-react'
 import api from '../lib/api'
 import { supabase } from '../lib/supabase'
-import LoadingSkeleton from '../components/LoadingSkeleton'
 import toast from 'react-hot-toast'
 
-const PLATFORM_ICONS = { youtube: '▶️', instagram: '📸', instagram_reels: '🎬', instagram_feed: '📸', instagram_image: '📸', facebook: '🔵', tiktok: '🎵', twitter: '✖️' }
-const STATUS_COLORS = { published: '#22c55e', failed: '#ef4444', publishing: '#f59e0b', scheduled: '#3b82f6', uploaded: '#6b7280' }
+const PLATFORM_LETTERS = {
+  youtube: 'YT', instagram: 'IG', instagram_reels: 'IG', instagram_feed: 'IG',
+  instagram_image: 'IG', facebook: 'f', tiktok: 'TT', twitter: '𝕏'
+}
+const PLATFORM_COLORS = {
+  youtube: '#FF0000', instagram: '#E1306C', instagram_reels: '#E1306C',
+  instagram_feed: '#833AB4', instagram_image: '#E1306C',
+  facebook: '#1877F2', tiktok: '#69C9D0', twitter: '#ffffff'
+}
+
+const STATUS_COLOR = {
+  published: 'var(--success)',
+  failed: 'var(--danger)',
+  publishing: 'var(--warning)',
+  scheduled: 'var(--info)',
+  uploaded: 'var(--text-tertiary)'
+}
 
 function getOverallStatus(posts) {
   if (!posts || posts.length === 0) return 'uploaded'
@@ -18,6 +32,16 @@ function getOverallStatus(posts) {
   if (posts.every(p => p.status === 'scheduled')) return 'scheduled'
   return 'partial'
 }
+
+const PlatformBadge = ({ platform }) => (
+  <span style={{
+    width: 22, height: 22, borderRadius: 6,
+    background: `${PLATFORM_COLORS[platform] || 'var(--accent)'}22`,
+    color: PLATFORM_COLORS[platform] || 'var(--accent)',
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+    fontSize: 11, fontWeight: 700
+  }}>{PLATFORM_LETTERS[platform] || '·'}</span>
+)
 
 export default function History() {
   const { user } = useAuth()
@@ -56,47 +80,62 @@ export default function History() {
   const PLATFORM_FILTERS = ['all', 'youtube', 'instagram', 'facebook', 'tiktok', 'twitter']
 
   return (
-    <div style={{ padding: '0 16px 16px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 0 16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', padding: 0 }}>
-            <ArrowLeft size={22} />
-          </button>
-          <div>
-            <div style={{ fontSize: 22, fontFamily: 'Syne', fontWeight: 800 }}>Upload History</div>
-            <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>{videos.length} uploads</div>
+    <div className="screen-pad">
+      <div className="page-header">
+        <button onClick={() => navigate('/')} className="icon-btn" aria-label="Back">
+          <ArrowLeft size={20} />
+        </button>
+        <div className="grow">
+          <div className="t-display">Upload history</div>
+          <div className="t-caption" style={{ marginTop: 4 }}>
+            <span className="t-mono" style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{videos.length}</span> uploads
           </div>
         </div>
-        <button onClick={loadHistory} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', padding: 4 }}>
+        <button onClick={loadHistory} className="icon-btn" aria-label="Refresh">
           <RefreshCw size={18} />
         </button>
       </div>
 
-      {/* Status filters */}
-      <div style={{ display: 'flex', gap: 6, marginBottom: 10, overflowX: 'auto', paddingBottom: 4 }}>
+      <div className="chip-row" style={{ marginBottom: 10 }}>
         {STATUS_FILTERS.map(f => (
-          <button key={f} onClick={() => setFilter(f)} style={{ padding: '6px 14px', borderRadius: 999, border: 'none', background: filter === f ? '#7c3aed' : 'rgba(255,255,255,0.08)', color: filter === f ? 'white' : 'rgba(255,255,255,0.5)', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s', textTransform: 'capitalize' }}>
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className={`chip ${filter === f ? 'active' : ''}`}
+            style={{ textTransform: 'capitalize' }}
+          >
             {f}
           </button>
         ))}
       </div>
 
-      {/* Platform filters */}
-      <div style={{ display: 'flex', gap: 6, marginBottom: 16, overflowX: 'auto', paddingBottom: 4 }}>
+      <div className="chip-row" style={{ marginBottom: 20 }}>
         {PLATFORM_FILTERS.map(p => (
-          <button key={p} onClick={() => setPlatformFilter(p)} style={{ padding: '5px 12px', borderRadius: 999, border: 'none', background: platformFilter === p ? 'rgba(124,58,237,0.4)' : 'rgba(255,255,255,0.06)', color: platformFilter === p ? 'white' : 'rgba(255,255,255,0.4)', fontSize: 11, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', textTransform: 'capitalize' }}>
-            {p !== 'all' && (PLATFORM_ICONS[p] || '')}{' '}{p}
+          <button
+            key={p}
+            onClick={() => setPlatformFilter(p)}
+            className={`chip ${platformFilter === p ? 'active' : ''}`}
+            style={{ textTransform: 'capitalize', minHeight: 32, padding: '6px 12px', fontSize: 12 }}
+          >
+            {p !== 'all' && <PlatformBadge platform={p} />} {p}
           </button>
         ))}
       </div>
 
-      {loading ? <LoadingSkeleton count={5} /> : videos.length === 0 ? (
-        <div className="card" style={{ padding: 40, textAlign: 'center', color: 'rgba(255,255,255,0.4)' }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>📭</div>
-          <div style={{ fontSize: 14 }}>No uploads found</div>
+      {loading ? (
+        <div className="stack-sm">
+          {[0,1,2,3].map(i => <div key={i} className="skeleton" style={{ height: 76 }} />)}
+        </div>
+      ) : videos.length === 0 ? (
+        <div className="card" style={{ padding: 40, textAlign: 'center' }}>
+          <div className="avatar-icon" style={{ margin: '0 auto 14px', width: 48, height: 48 }}>
+            <Inbox size={22} />
+          </div>
+          <div className="t-body">No uploads found</div>
+          <div className="t-body-sm" style={{ marginTop: 4 }}>Try a different filter or upload your first media.</div>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div className="stack-sm">
           {videos.map(video => {
             const isImage = video.media_type === 'image'
             const status = getOverallStatus(video.posts)
@@ -105,60 +144,79 @@ export default function History() {
             const preview = video.thumbnail_url || (isImage ? video.original_url : null)
 
             return (
-              <div key={video.id} className="card" style={{ padding: '14px 16px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }} onClick={() => setExpanded(isExpanded ? null : video.id)}>
-                  <div style={{ width: 52, height: 52, borderRadius: 10, background: 'rgba(255,255,255,0.06)', overflow: 'hidden', flexShrink: 0 }}>
+              <div key={video.id} className="card" style={{ padding: 0 }}>
+                <div
+                  className="row"
+                  style={{ padding: '14px 16px', gap: 12, cursor: 'pointer' }}
+                  onClick={() => setExpanded(isExpanded ? null : video.id)}
+                >
+                  <div style={{ width: 56, height: 56, borderRadius: 10, background: 'var(--bg-sunken)', overflow: 'hidden', flexShrink: 0, border: '1px solid var(--border-subtle)' }}>
                     {preview
                       ? <img src={preview} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>{isImage ? '🖼️' : '🎬'}</div>}
+                      : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, color: 'var(--text-tertiary)' }}>{isImage ? '🖼' : '🎬'}</div>}
                   </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 700, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{video.title || 'Untitled'}</div>
-                    <div style={{ display: 'flex', gap: 6, marginTop: 4, flexWrap: 'wrap', alignItems: 'center' }}>
-                      <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', background: 'rgba(255,255,255,0.06)', padding: '2px 6px', borderRadius: 4 }}>{isImage ? 'Image' : 'Video'}</span>
+
+                  <div className="grow" style={{ flex: 1, minWidth: 0 }}>
+                    <div className="t-h3 truncate-1">{video.title || 'Untitled'}</div>
+                    <div className="row" style={{ marginTop: 6, gap: 6, flexWrap: 'wrap' }}>
+                      <span className="badge" style={{
+                        background: 'var(--bg-hover)', color: 'var(--text-tertiary)',
+                        borderColor: 'var(--border-subtle)', fontSize: 10
+                      }}>{isImage ? 'Image' : 'Video'}</span>
                       {platforms.length > 0
-                        ? platforms.map(p => <span key={p} style={{ fontSize: 14 }}>{PLATFORM_ICONS[p] || '🔗'}</span>)
-                        : <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)' }}>Not published yet</span>}
+                        ? platforms.map(p => <PlatformBadge key={p} platform={p} />)
+                        : <span className="t-caption">Not published yet</span>}
                     </div>
-                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginTop: 4 }}>
+                    <div className="t-caption" style={{ marginTop: 6 }}>
                       {new Date(video.created_at).toLocaleDateString('en-PK', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span className={`badge badge-${status === 'partial' ? 'scheduled' : status}`} style={{ textTransform: 'capitalize', fontSize: 11 }}>{status}</span>
-                    {isExpanded ? <ChevronUp size={14} color="rgba(255,255,255,0.3)" /> : <ChevronDown size={14} color="rgba(255,255,255,0.3)" />}
+
+                  <div className="row" style={{ gap: 8, flexShrink: 0 }}>
+                    <span className={`badge badge-${status === 'partial' ? 'partial' : status}`} style={{ textTransform: 'capitalize' }}>{status}</span>
+                    {isExpanded ? <ChevronUp size={16} style={{ color: 'var(--text-tertiary)' }} /> : <ChevronDown size={16} style={{ color: 'var(--text-tertiary)' }} />}
                   </div>
                 </div>
 
                 {isExpanded && (
-                  <div style={{ marginTop: 14, borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 14 }}>
+                  <div style={{ padding: '0 16px 16px', borderTop: '1px solid var(--border-subtle)' }}>
                     {(video.posts || []).length === 0 ? (
-                      <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', textAlign: 'center', padding: '8px 0' }}>
+                      <div className="t-body-sm" style={{ textAlign: 'center', padding: '14px 0' }}>
                         Not published to any platform yet
                       </div>
                     ) : (
-                      video.posts.map(p => (
-                        <div key={p.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.04)', fontSize: 12 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <span>{PLATFORM_ICONS[p.platform] || '🔗'}</span>
-                            <span style={{ color: 'rgba(255,255,255,0.7)' }}>{p.target_name || p.platform}</span>
+                      <div style={{ marginTop: 8 }}>
+                        {video.posts.map((p, i) => (
+                          <div
+                            key={p.id}
+                            className="row-between"
+                            style={{
+                              padding: '10px 0',
+                              borderBottom: i === video.posts.length - 1 ? 'none' : '1px solid var(--border-subtle)'
+                            }}
+                          >
+                            <div className="row" style={{ gap: 8 }}>
+                              <PlatformBadge platform={p.platform} />
+                              <span className="t-body-sm" style={{ color: 'var(--text-primary)' }}>{p.target_name || p.platform}</span>
+                            </div>
+                            <div className="row" style={{ gap: 10 }}>
+                              <span style={{ color: STATUS_COLOR[p.status] || 'var(--text-secondary)', fontSize: 12, fontWeight: 600, textTransform: 'capitalize' }}>
+                                {p.status}
+                              </span>
+                              {p.platform_post_url && (
+                                <a href={p.platform_post_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)' }}>
+                                  <ExternalLink size={13} />
+                                </a>
+                              )}
+                            </div>
                           </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <span style={{ color: STATUS_COLORS[p.status] || 'white', fontWeight: 600 }}>{p.status}</span>
-                            {p.platform_post_url && (
-                              <a href={p.platform_post_url} target="_blank" rel="noopener noreferrer" style={{ color: '#7c3aed' }}>
-                                <ExternalLink size={12} />
-                              </a>
-                            )}
-                          </div>
-                        </div>
-                      ))
+                        ))}
+                      </div>
                     )}
-                    <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-                      <button onClick={() => deleteVideo(video.id)} style={{ flex: 1, padding: '8px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#f87171', borderRadius: 8, cursor: 'pointer', fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
-                        <Trash2 size={13} /> Delete
-                      </button>
-                    </div>
+
+                    <button onClick={() => deleteVideo(video.id)} className="btn-danger btn-sm" style={{ width: '100%', marginTop: 12 }}>
+                      <Trash2 size={13} /> Delete upload
+                    </button>
                   </div>
                 )}
               </div>

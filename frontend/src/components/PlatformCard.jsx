@@ -5,8 +5,8 @@ const PLATFORM_COLORS = {
   tiktok: '#69C9D0', twitter: '#FFFFFF'
 }
 
-const PLATFORM_ICONS = {
-  youtube: '▶️', instagram: '📸', facebook: '🔵', tiktok: '🎵', twitter: '✖️'
+const PLATFORM_LETTERS = {
+  youtube: 'YT', instagram: 'IG', facebook: 'f', tiktok: 'TT', twitter: '𝕏'
 }
 
 export default function PlatformCard({ platform, account, onConnect, onDisconnect, loading }) {
@@ -14,37 +14,44 @@ export default function PlatformCard({ platform, account, onConnect, onDisconnec
   const connected = !!account?.is_active
 
   return (
-    <div className="card" style={{ padding: '16px', marginBottom: 12 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <div style={{ width: 44, height: 44, borderRadius: 12, background: `${color}20`, border: `1px solid ${color}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
-          {PLATFORM_ICONS[platform]}
+    <div className="card" style={{ padding: 14, marginBottom: 10 }}>
+      <div className="row" style={{ gap: 12 }}>
+        <div style={{
+          width: 44, height: 44, borderRadius: 10,
+          background: `${color}22`, color,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 14, fontWeight: 700, flexShrink: 0
+        }}>
+          {PLATFORM_LETTERS[platform] || '·'}
         </div>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontWeight: 700, fontSize: 15, textTransform: 'capitalize', marginBottom: 2 }}>{platform}</div>
+
+        <div className="grow" style={{ flex: 1, minWidth: 0 }}>
+          <div className="t-h3" style={{ textTransform: 'capitalize', marginBottom: 2 }}>{platform}</div>
           {connected ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div className="row" style={{ gap: 6, minWidth: 0 }}>
               {account.platform_avatar && (
-                <img src={account.platform_avatar} alt="" style={{ width: 18, height: 18, borderRadius: '50%' }} />
+                <img src={account.platform_avatar} alt="" style={{ width: 16, height: 16, borderRadius: '50%', flexShrink: 0 }} />
               )}
-              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)' }}>@{account.platform_username || 'Connected'}</span>
-              <CheckCircle size={14} color="#22c55e" />
+              <span className="t-body-sm truncate-1">@{account.platform_username || 'Connected'}</span>
+              <CheckCircle size={13} style={{ color: 'var(--success)', flexShrink: 0 }} />
             </div>
           ) : (
-            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>Not connected</span>
+            <span className="t-body-sm t-muted">Not connected</span>
           )}
         </div>
+
         <button
           onClick={connected ? onDisconnect : onConnect}
           disabled={loading}
+          className={connected ? 'btn-danger btn-sm' : 'btn-secondary btn-sm'}
           style={{
-            background: connected ? 'rgba(239,68,68,0.1)' : `${color}20`,
-            border: `1px solid ${connected ? 'rgba(239,68,68,0.3)' : `${color}40`}`,
-            color: connected ? '#f87171' : color,
-            borderRadius: 10, padding: '8px 14px', fontSize: 13, fontWeight: 600,
-            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap'
+            width: 'auto', padding: '0 14px', flexShrink: 0,
+            ...(connected ? {} : { borderColor: `${color}55`, color, background: `${color}11` })
           }}
         >
-          {loading ? <div className="spinner" style={{ width: 14, height: 14 }} /> : connected ? <><XCircle size={14} /> Disconnect</> : <><Link size={14} /> Connect</>}
+          {loading ? <div className="spinner" style={{ width: 14, height: 14 }} />
+            : connected ? <><XCircle size={13} /> Disconnect</>
+            : <><Link size={13} /> Connect</>}
         </button>
       </div>
     </div>

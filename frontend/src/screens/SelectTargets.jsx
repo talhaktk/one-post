@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, CheckSquare } from 'lucide-react'
+import { Search, CheckSquare, Calendar, Clock, BarChart3, Rocket } from 'lucide-react'
 import { usePost } from '../context/PostContext'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
@@ -8,19 +8,29 @@ import FacebookPageItem from '../components/FacebookPageItem'
 import TikTokAccountItem from '../components/TikTokAccountItem'
 import toast from 'react-hot-toast'
 
+const PLATFORM_COLORS = {
+  youtube: '#FF0000', instagram_reels: '#E1306C', instagram_feed: '#833AB4',
+  instagram_image: '#E1306C', facebook: '#1877F2', tiktok: '#69C9D0', twitter: '#ffffff'
+}
+
+const PLATFORM_LETTERS = {
+  youtube: 'YT', instagram_reels: 'IG', instagram_feed: 'IG',
+  instagram_image: 'IG', facebook: 'f', tiktok: 'TT', twitter: '𝕏'
+}
+
 const VIDEO_PLATFORMS = [
-  { key: 'youtube', label: 'YouTube', icon: '▶️', color: '#FF0000' },
-  { key: 'instagram_reels', label: 'Instagram Reels', icon: '🎬', color: '#E1306C' },
-  { key: 'instagram_feed', label: 'Instagram Feed', icon: '📸', color: '#833AB4' },
-  { key: 'facebook', label: 'Facebook Pages', icon: '🔵', color: '#1877F2' },
-  { key: 'tiktok', label: 'TikTok', icon: '🎵', color: '#69C9D0' },
-  { key: 'twitter', label: 'X (Twitter)', icon: '✖️', color: '#FFFFFF' }
+  { key: 'youtube',         label: 'YouTube' },
+  { key: 'instagram_reels', label: 'Instagram Reels' },
+  { key: 'instagram_feed',  label: 'Instagram Feed' },
+  { key: 'facebook',        label: 'Facebook Pages' },
+  { key: 'tiktok',          label: 'TikTok' },
+  { key: 'twitter',         label: 'X (Twitter)' }
 ]
 
 const IMAGE_PLATFORMS = [
-  { key: 'instagram_image', label: 'Instagram', icon: '📸', color: '#E1306C' },
-  { key: 'facebook', label: 'Facebook Pages', icon: '🔵', color: '#1877F2' },
-  { key: 'twitter', label: 'X (Twitter)', icon: '✖️', color: '#FFFFFF' }
+  { key: 'instagram_image', label: 'Instagram' },
+  { key: 'facebook',        label: 'Facebook Pages' },
+  { key: 'twitter',         label: 'X (Twitter)' }
 ]
 
 const POST_DELAYS = [10, 30, 60, 120]
@@ -34,7 +44,7 @@ export default function SelectTargets() {
   const [fbSearch, setFbSearch] = useState('')
   const [scheduledAt, setScheduledAt] = useState('')
   const [postDelay, setPostDelay] = useState(profile?.post_delay_seconds || 30)
-  const [loading, setLoading] = useState(true)
+  const [, setLoading] = useState(true)
 
   useEffect(() => { if (user) loadAccounts() }, [user])
 
@@ -84,8 +94,8 @@ export default function SelectTargets() {
     const tikCount = postState.targets.tiktok ? postState.selectedTikTokAccounts.length : 0
     const total = fbCount + tikCount + (postState.targets.youtube ? 1 : 0) + (postState.targets.instagram_reels ? 1 : 0) + (postState.targets.twitter ? 1 : 0)
     const seconds = total * postDelay
-    if (seconds < 60) return `~${seconds} seconds`
-    return `~${Math.round(seconds / 60)} minutes`
+    if (seconds < 60) return `~${seconds}s`
+    return `~${Math.round(seconds / 60)}m`
   }
 
   const handlePublish = () => {
@@ -100,51 +110,96 @@ export default function SelectTargets() {
   const filteredFbPages = fbPages.filter(p => p.page_name.toLowerCase().includes(fbSearch.toLowerCase()))
   const selectedCount = Object.values(postState.targets).filter(Boolean).length
 
+  const PlatformDot = ({ pkey, size = 36 }) => (
+    <span style={{
+      width: size, height: size, borderRadius: 9,
+      background: `${PLATFORM_COLORS[pkey] || 'var(--accent)'}22`,
+      color: PLATFORM_COLORS[pkey] || 'var(--accent)',
+      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+      fontSize: 13, fontWeight: 700, flexShrink: 0
+    }}>{PLATFORM_LETTERS[pkey] || '·'}</span>
+  )
+
   return (
-    <div style={{ padding: '0 16px 16px' }}>
-      <div style={{ padding: '20px 0 16px' }}>
-        <div style={{ fontSize: 22, fontFamily: 'Syne', fontWeight: 800 }}>Select Targets</div>
-        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>Step {isImage ? '3 of 3' : '4 of 4'} — Choose where to publish</div>
+    <div className="screen-pad">
+      <div style={{ marginBottom: 20 }}>
+        <div className="t-label" style={{ marginBottom: 6 }}>Step {isImage ? '3 of 3' : '4 of 4'}</div>
+        <div className="t-display">Where to publish</div>
+        <div className="t-body-sm" style={{ marginTop: 4 }}>Pick platforms and choose when to go live.</div>
       </div>
 
-      {/* Platform toggles */}
-      <div style={{ marginBottom: 20 }}>
-        {PLATFORMS_CONFIG.map(({ key, label, icon, color }) => {
+      {/* Platform list */}
+      <div className="stack-sm" style={{ marginBottom: 20 }}>
+        {PLATFORMS_CONFIG.map(({ key, label }) => {
           const enabled = postState.targets[key]
           return (
             <div key={key}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', background: enabled ? `${color}10` : 'rgba(255,255,255,0.03)', border: `1px solid ${enabled ? `${color}30` : 'rgba(255,255,255,0.06)'}`, borderRadius: 12, marginBottom: 8, cursor: 'pointer' }} onClick={() => toggleTarget(key)}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{ fontSize: 20 }}>{icon}</span>
-                  <span style={{ fontWeight: 600, fontSize: 14 }}>{label}</span>
+              <div
+                className="card-interactive"
+                onClick={() => toggleTarget(key)}
+                style={{
+                  padding: '12px 14px',
+                  borderColor: enabled ? 'var(--accent)' : 'var(--border-subtle)',
+                  background: enabled ? 'var(--accent-soft)' : 'var(--bg-elevated)'
+                }}
+              >
+                <div className="row" style={{ gap: 12 }}>
+                  <PlatformDot pkey={key} />
+                  <div className="grow t-h3" style={{ flex: 1 }}>{label}</div>
+                  <div
+                    className={`toggle ${enabled ? 'active' : ''}`}
+                    onClick={(e) => { e.stopPropagation(); toggleTarget(key) }}
+                  />
                 </div>
-                <div className={`toggle ${enabled ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); toggleTarget(key) }} />
               </div>
 
-              {/* FB Pages expanded */}
               {key === 'facebook' && enabled && (
-                <div className="card" style={{ padding: '14px', marginBottom: 8, marginTop: -4 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                    <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)' }}>{postState.selectedFacebookPages.length} of {fbPages.length} pages selected</span>
-                    <button onClick={selectAllFb} style={{ background: 'none', border: 'none', color: '#1877F2', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}><CheckSquare size={14} /> Select All</button>
+                <div className="card" style={{ padding: 14, marginTop: 6 }}>
+                  <div className="row-between" style={{ marginBottom: 10 }}>
+                    <span className="t-body-sm">
+                      <span className="t-mono" style={{ color: 'var(--text-primary)', fontWeight: 600 }}>
+                        {postState.selectedFacebookPages.length}
+                      </span>
+                      {' of '}{fbPages.length} pages
+                    </span>
+                    <button onClick={selectAllFb} className="btn-ghost btn-xs" style={{ color: 'var(--accent)' }}>
+                      <CheckSquare size={13} /> Select all
+                    </button>
                   </div>
+
                   <div style={{ position: 'relative', marginBottom: 10 }}>
-                    <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }} />
-                    <input className="input" style={{ paddingLeft: 32, padding: '8px 8px 8px 32px', fontSize: 13 }} placeholder="Search pages..." value={fbSearch} onChange={e => setFbSearch(e.target.value)} />
+                    <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)' }} />
+                    <input
+                      className="input"
+                      style={{ paddingLeft: 34, fontSize: 14, minHeight: 40 }}
+                      placeholder="Search pages…"
+                      value={fbSearch}
+                      onChange={e => setFbSearch(e.target.value)}
+                    />
                   </div>
+
                   <div style={{ maxHeight: 300, overflowY: 'auto' }}>
                     {filteredFbPages.map(page => (
-                      <FacebookPageItem key={page.id} page={page} selected={postState.selectedFacebookPages.includes(page.page_id)} onToggle={toggleFbPage} />
+                      <FacebookPageItem
+                        key={page.id}
+                        page={page}
+                        selected={postState.selectedFacebookPages.includes(page.page_id)}
+                        onToggle={toggleFbPage}
+                      />
                     ))}
                   </div>
                 </div>
               )}
 
-              {/* TikTok accounts expanded */}
               {key === 'tiktok' && enabled && (
-                <div className="card" style={{ padding: '14px', marginBottom: 8, marginTop: -4 }}>
+                <div className="card" style={{ padding: 14, marginTop: 6 }}>
                   {tikTokAccounts.map(acc => (
-                    <TikTokAccountItem key={acc.id} account={acc} selected={postState.selectedTikTokAccounts.includes(acc.id)} onToggle={toggleTikTok} />
+                    <TikTokAccountItem
+                      key={acc.id}
+                      account={acc}
+                      selected={postState.selectedTikTokAccounts.includes(acc.id)}
+                      onToggle={toggleTikTok}
+                    />
                   ))}
                 </div>
               )}
@@ -154,53 +209,96 @@ export default function SelectTargets() {
       </div>
 
       {/* Schedule */}
-      <div className="card" style={{ padding: '16px', marginBottom: 16 }}>
-        <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 12 }}>📅 Schedule</div>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button onClick={() => setScheduledAt('')} style={{ flex: 1, padding: 12, borderRadius: 10, border: `1px solid ${!scheduledAt ? '#7c3aed' : 'rgba(255,255,255,0.1)'}`, background: !scheduledAt ? 'rgba(124,58,237,0.15)' : 'transparent', color: !scheduledAt ? '#c4b5fd' : 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: 14, fontWeight: 600 }}>
-            🚀 Publish Now
-          </button>
-          <button onClick={() => setScheduledAt(new Date(Date.now() + 3600000).toISOString().slice(0, 16))} style={{ flex: 1, padding: 12, borderRadius: 10, border: `1px solid ${scheduledAt ? '#7c3aed' : 'rgba(255,255,255,0.1)'}`, background: scheduledAt ? 'rgba(124,58,237,0.15)' : 'transparent', color: scheduledAt ? '#c4b5fd' : 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: 14, fontWeight: 600 }}>
-            📅 Schedule
-          </button>
+      <div className="card" style={{ padding: 16, marginBottom: 12 }}>
+        <div className="row" style={{ gap: 10, marginBottom: 12 }}>
+          <Calendar size={16} style={{ color: 'var(--text-secondary)' }} />
+          <div className="t-h3">Schedule</div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          {[
+            { label: 'Publish now', active: !scheduledAt, onClick: () => setScheduledAt('') },
+            { label: 'Schedule for later', active: !!scheduledAt, onClick: () => setScheduledAt(new Date(Date.now() + 3600000).toISOString().slice(0, 16)) }
+          ].map(({ label, active, onClick }) => (
+            <button
+              key={label}
+              onClick={onClick}
+              style={{
+                minHeight: 44, padding: '0 10px',
+                borderRadius: 10,
+                border: `1px solid ${active ? 'var(--accent)' : 'var(--border-strong)'}`,
+                background: active ? 'var(--accent-soft)' : 'var(--bg-elevated)',
+                color: active ? 'var(--accent)' : 'var(--text-secondary)',
+                cursor: 'pointer', fontSize: 13, fontWeight: 600
+              }}
+            >{label}</button>
+          ))}
         </div>
         {scheduledAt && (
-          <input type="datetime-local" className="input" style={{ marginTop: 12 }} value={scheduledAt} onChange={e => setScheduledAt(e.target.value)} min={new Date().toISOString().slice(0, 16)} />
+          <input
+            type="datetime-local"
+            className="input"
+            style={{ marginTop: 12 }}
+            value={scheduledAt}
+            onChange={e => setScheduledAt(e.target.value)}
+            min={new Date().toISOString().slice(0, 16)}
+          />
         )}
       </div>
 
-      {/* Delay settings */}
-      <div className="card" style={{ padding: '16px', marginBottom: 20 }}>
-        <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>⏱️ Delay Between Posts</div>
-        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginBottom: 12 }}>Recommended: 30 seconds to avoid rate limits</div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          {POST_DELAYS.map(d => (
-            <button key={d} onClick={() => setPostDelay(d)} style={{ flex: 1, padding: '8px 4px', borderRadius: 8, border: `1px solid ${postDelay === d ? '#7c3aed' : 'rgba(255,255,255,0.1)'}`, background: postDelay === d ? 'rgba(124,58,237,0.15)' : 'transparent', color: postDelay === d ? '#c4b5fd' : 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: 11, fontWeight: 600 }}>
-              {d >= 60 ? `${d / 60}m` : `${d}s`}{d === 30 ? ' ✅' : ''}
-            </button>
-          ))}
+      {/* Delay between posts */}
+      <div className="card" style={{ padding: 16, marginBottom: 12 }}>
+        <div className="row" style={{ gap: 10, marginBottom: 4 }}>
+          <Clock size={16} style={{ color: 'var(--text-secondary)' }} />
+          <div className="t-h3">Delay between posts</div>
+        </div>
+        <div className="t-caption" style={{ marginBottom: 12 }}>30 seconds is recommended to avoid rate limits.</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+          {POST_DELAYS.map(d => {
+            const active = postDelay === d
+            return (
+              <button
+                key={d}
+                onClick={() => setPostDelay(d)}
+                style={{
+                  minHeight: 40, padding: '0 6px',
+                  borderRadius: 9,
+                  border: `1px solid ${active ? 'var(--accent)' : 'var(--border-strong)'}`,
+                  background: active ? 'var(--accent-soft)' : 'var(--bg-elevated)',
+                  color: active ? 'var(--accent)' : 'var(--text-secondary)',
+                  cursor: 'pointer', fontSize: 13, fontWeight: 600
+                }}
+              >{d >= 60 ? `${d / 60}m` : `${d}s`}</button>
+            )
+          })}
         </div>
       </div>
 
       {/* Summary */}
-      <div className="card" style={{ padding: '16px', marginBottom: 20 }}>
-        <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 12 }}>📊 Summary</div>
+      <div className="card" style={{ padding: 16, marginBottom: 20 }}>
+        <div className="row" style={{ gap: 10, marginBottom: 12 }}>
+          <BarChart3 size={16} style={{ color: 'var(--text-secondary)' }} />
+          <div className="t-h3">Summary</div>
+        </div>
         {[
-          ['Platforms selected', selectedCount],
-          ['Facebook pages', postState.targets.facebook ? postState.selectedFacebookPages.length : 0],
-          ['TikTok accounts', postState.targets.tiktok ? postState.selectedTikTokAccounts.length : 0],
-          ['Estimated reach', calcEstimatedReach()],
-          ['Estimated time', calcEstimatedTime()]
-        ].map(([label, value]) => (
-          <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.05)', fontSize: 13 }}>
-            <span style={{ color: 'rgba(255,255,255,0.5)' }}>{label}</span>
-            <span style={{ fontWeight: 700 }}>{value}</span>
+          ['Platforms selected',  selectedCount],
+          ['Facebook pages',      postState.targets.facebook ? postState.selectedFacebookPages.length : 0],
+          ['TikTok accounts',     postState.targets.tiktok ? postState.selectedTikTokAccounts.length : 0],
+          ['Estimated reach',     calcEstimatedReach()],
+          ['Estimated duration',  calcEstimatedTime()]
+        ].map(([label, value], i, arr) => (
+          <div
+            key={label}
+            className="row-between"
+            style={{ padding: '10px 0', borderBottom: i === arr.length - 1 ? 'none' : '1px solid var(--border-subtle)' }}
+          >
+            <span className="t-body-sm">{label}</span>
+            <span className="t-mono" style={{ color: 'var(--text-primary)', fontWeight: 600, fontSize: 14 }}>{value}</span>
           </div>
         ))}
       </div>
 
-      <button className="btn-primary" onClick={handlePublish} style={{ fontSize: 16, fontWeight: 800 }}>
-        {scheduledAt ? '📅 Confirm Schedule' : '🚀 Confirm & Publish'}
+      <button className="btn-primary" onClick={handlePublish}>
+        {scheduledAt ? <><Calendar size={16} /> Confirm schedule</> : <><Rocket size={16} /> Confirm & publish</>}
       </button>
     </div>
   )

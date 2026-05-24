@@ -5,12 +5,37 @@ export default {
     extend: {
       colors: {
         bg: {
-          deep: '#07071a',
-          card: 'rgba(255,255,255,0.04)',
-          mid: '#0d0d2b'
+          base: '#0a0b12',
+          elevated: '#15161f',
+          hover: '#1d1e29',
+          sunken: '#060710',
+          // legacy aliases
+          deep: '#0a0b12',
+          card: '#15161f',
+          mid: '#15161f'
         },
-        border: { DEFAULT: 'rgba(255,255,255,0.08)' },
-        accent: { DEFAULT: '#7c3aed', light: '#9d5cff', dark: '#5b21b6' },
+        border: {
+          DEFAULT: 'rgba(255,255,255,0.06)',
+          subtle: 'rgba(255,255,255,0.06)',
+          strong: 'rgba(255,255,255,0.12)'
+        },
+        text: {
+          primary: '#f5f5f7',
+          secondary: 'rgba(245,245,247,0.65)',
+          tertiary: 'rgba(245,245,247,0.45)',
+          disabled: 'rgba(245,245,247,0.25)'
+        },
+        accent: {
+          DEFAULT: '#7c3aed',
+          hover: '#8b5cf6',
+          soft: 'rgba(124,58,237,0.14)',
+          light: '#8b5cf6',
+          dark: '#5b21b6'
+        },
+        success: '#10b981',
+        warning: '#f59e0b',
+        danger: '#ef4444',
+        info: '#3b82f6',
         platform: {
           youtube: '#FF0000',
           instagram: '#E1306C',
@@ -20,11 +45,12 @@ export default {
         }
       },
       fontFamily: {
-        heading: ['Syne', 'sans-serif'],
-        body: ['DM Sans', 'sans-serif'],
-        mono: ['DM Mono', 'monospace']
+        sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        heading: ['Inter', 'system-ui', 'sans-serif'],
+        body: ['Inter', 'system-ui', 'sans-serif'],
+        mono: ['DM Mono', 'ui-monospace', 'SFMono-Regular', 'monospace']
       },
-      maxWidth: { app: '430px' },
+      maxWidth: { app: '480px' },
       animation: {
         'pulse-slow': 'pulse 3s cubic-bezier(0.4,0,0.6,1) infinite',
         'spin-slow': 'spin 3s linear infinite',

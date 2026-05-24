@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, RefreshCw } from 'lucide-react'
+import { Plus, RefreshCw, ChevronRight, Inbox } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import api from '../lib/api'
 import LoadingSkeleton from '../components/LoadingSkeleton'
 
-const STATUS_COLORS = { published: '#22c55e', failed: '#ef4444', publishing: '#f59e0b', scheduled: '#3b82f6' }
-const PLATFORM_ICONS = { youtube: '▶️', instagram: '📸', facebook: '🔵', tiktok: '🎵', twitter: '✖️' }
+const PLATFORM_ICONS = { youtube: '▶', instagram: '📸', facebook: 'f', tiktok: '♪', twitter: '𝕏' }
+const PLATFORM_COLORS = {
+  youtube: '#FF0000', instagram: '#E1306C', facebook: '#1877F2',
+  tiktok: '#69C9D0', twitter: '#ffffff'
+}
 
 export default function Dashboard() {
   const { user, profile } = useAuth()
@@ -47,63 +50,80 @@ export default function Dashboard() {
     return 'partial'
   }
 
+  const firstName = profile?.full_name?.split(' ')[0] || 'there'
+  const initial = (profile?.full_name || profile?.email || 'U')[0].toUpperCase()
+
   return (
-    <div style={{ padding: '0 16px 16px' }}>
+    <div className="screen-pad">
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 0 16px' }}>
-        <div>
-          <div style={{ fontSize: 22, fontFamily: 'Syne', fontWeight: 800 }}>OnePost</div>
-          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>Welcome, {profile?.full_name?.split(' ')[0] || 'there'}</div>
+      <div className="page-header">
+        <div className="grow">
+          <div className="t-display">OnePost</div>
+          <div className="t-caption" style={{ marginTop: 4 }}>Welcome back, {firstName}</div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <button onClick={loadData} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', padding: 4 }}>
-            <RefreshCw size={18} />
-          </button>
-          {profile?.avatar_url ? (
-            <img src={profile.avatar_url} alt="avatar" style={{ width: 36, height: 36, borderRadius: '50%', border: '2px solid #7c3aed' }} />
-          ) : (
-            <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#7c3aed', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 700 }}>
-              {(profile?.full_name || profile?.email || 'U')[0].toUpperCase()}
-            </div>
-          )}
-        </div>
+        <button onClick={loadData} className="icon-btn" aria-label="Refresh">
+          <RefreshCw size={18} />
+        </button>
+        {profile?.avatar_url ? (
+          <img src={profile.avatar_url} alt="" style={{ width: 40, height: 40, borderRadius: 10, objectFit: 'cover', border: '1px solid var(--border-strong)' }} />
+        ) : (
+          <div style={{ width: 40, height: 40, borderRadius: 10, background: 'var(--accent)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 700 }}>
+            {initial}
+          </div>
+        )}
       </div>
 
       {/* Stats */}
-      {loading ? <LoadingSkeleton type="stat" /> : stats && (
-        <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
+      {loading ? (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 20 }}>
+          {[0,1,2,3].map(i => <div key={i} className="skeleton" style={{ height: 76 }} />)}
+        </div>
+      ) : stats && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 24 }}>
           {[
-            { label: 'Total Posts', value: stats.total, color: '#7c3aed' },
-            { label: 'Platforms', value: stats.platforms, color: '#3b82f6' },
-            { label: 'FB Pages', value: stats.fbPages, color: '#1877F2' },
-            { label: 'TikTok', value: stats.tikTok, color: '#69C9D0' }
+            { label: 'Total posts', value: stats.total },
+            { label: 'Platforms', value: stats.platforms },
+            { label: 'FB pages', value: stats.fbPages },
+            { label: 'TikTok', value: stats.tikTok }
           ].map(s => (
-            <div key={s.label} className="card" style={{ flex: 1, padding: '12px 8px', textAlign: 'center' }}>
-              <div style={{ fontSize: 22, fontWeight: 800, color: s.color }}>{s.value}</div>
-              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginTop: 2, lineHeight: 1.2 }}>{s.label}</div>
+            <div key={s.label} className="card" style={{ padding: '14px 16px' }}>
+              <div className="t-mono" style={{ fontSize: 26, fontWeight: 600, lineHeight: 1.1, color: 'var(--text-primary)' }}>{s.value}</div>
+              <div className="t-label" style={{ marginTop: 6 }}>{s.label}</div>
             </div>
           ))}
         </div>
       )}
 
-      {/* New Post CTA */}
-      <button onClick={() => navigate('/upload')} className="btn-primary" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 24 }}>
-        <Plus size={20} /> Upload & Post New Video
+      {/* Primary CTA */}
+      <button onClick={() => navigate('/upload')} className="btn-primary" style={{ marginBottom: 28 }}>
+        <Plus size={18} strokeWidth={2.4} /> New post
       </button>
 
       {/* Recent Posts */}
-      <div style={{ marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ fontWeight: 700, fontSize: 16 }}>Recent Posts</div>
-        <button onClick={() => navigate('/history')} style={{ background: 'none', border: 'none', color: '#7c3aed', fontSize: 13, cursor: 'pointer' }}>View all</button>
+      <div className="row-between" style={{ marginBottom: 12 }}>
+        <div className="t-h2">Recent uploads</div>
+        <button onClick={() => navigate('/history')} className="btn-ghost btn-sm" style={{ color: 'var(--accent)', padding: '0 8px', minHeight: 32 }}>
+          View all <ChevronRight size={14} />
+        </button>
       </div>
 
-      {loading ? <LoadingSkeleton count={4} /> : posts.length === 0 ? (
-        <div className="card" style={{ padding: 32, textAlign: 'center', color: 'rgba(255,255,255,0.4)' }}>
-          <div style={{ fontSize: 36, marginBottom: 12 }}>📭</div>
-          <div style={{ fontSize: 14 }}>No uploads yet. Upload your first video or image!</div>
+      {loading ? (
+        <div className="stack">
+          {[0,1,2].map(i => <div key={i} className="skeleton" style={{ height: 72 }} />)}
+        </div>
+      ) : posts.length === 0 ? (
+        <div className="card" style={{ padding: 32, textAlign: 'center' }}>
+          <div className="avatar-icon" style={{ margin: '0 auto 12px', width: 48, height: 48 }}>
+            <Inbox size={22} />
+          </div>
+          <div className="t-body" style={{ marginBottom: 4 }}>No uploads yet</div>
+          <div className="t-body-sm" style={{ marginBottom: 16 }}>Upload your first video or image to get started.</div>
+          <button onClick={() => navigate('/upload')} className="btn-secondary" style={{ maxWidth: 220, margin: '0 auto' }}>
+            <Plus size={16} /> Create post
+          </button>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div className="stack-sm">
           {posts.map(video => {
             const platforms = [...new Set((video.posts || []).map(p => p.platform))]
             const statuses = (video.posts || []).map(p => p.status)
@@ -111,22 +131,30 @@ export default function Dashboard() {
             const isImage = video.media_type === 'image'
             const preview = video.thumbnail_url || (isImage ? video.original_url : null)
             return (
-              <div key={video.id} className="card" style={{ padding: '12px 14px', cursor: 'pointer' }} onClick={() => navigate('/history')}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ width: 48, height: 48, borderRadius: 10, background: 'rgba(255,255,255,0.06)', overflow: 'hidden', flexShrink: 0 }}>
+              <div key={video.id} className="card-interactive" style={{ padding: '12px 14px' }} onClick={() => navigate('/history')}>
+                <div className="row" style={{ gap: 12 }}>
+                  <div style={{ width: 52, height: 52, borderRadius: 10, background: 'var(--bg-sunken)', overflow: 'hidden', flexShrink: 0, border: '1px solid var(--border-subtle)' }}>
                     {preview
                       ? <img src={preview} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>{isImage ? '🖼️' : '🎬'}</div>}
+                      : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, color: 'var(--text-tertiary)' }}>{isImage ? '🖼' : '🎬'}</div>}
                   </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 600, fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{video.title || 'Untitled'}</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                  <div className="grow" style={{ flex: 1, minWidth: 0 }}>
+                    <div className="t-h3 truncate-1">{video.title || 'Untitled'}</div>
+                    <div className="row" style={{ marginTop: 6, gap: 6 }}>
                       {platforms.length > 0
-                        ? platforms.map(p => <span key={p} style={{ fontSize: 14 }}>{PLATFORM_ICONS[p] || '🔗'}</span>)
-                        : <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)' }}>Not published yet</span>}
+                        ? platforms.map(p => (
+                            <span key={p} style={{
+                              width: 18, height: 18, borderRadius: 5,
+                              background: `${PLATFORM_COLORS[p] || 'var(--accent)'}22`,
+                              color: PLATFORM_COLORS[p] || 'var(--accent)',
+                              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                              fontSize: 10, fontWeight: 700
+                            }}>{PLATFORM_ICONS[p] || '·'}</span>
+                          ))
+                        : <span className="t-caption">Not published yet</span>}
                     </div>
                   </div>
-                  <span className={`badge badge-${status === 'uploaded' ? 'scheduled' : status}`} style={{ textTransform: 'capitalize', fontSize: 11 }}>{status}</span>
+                  <span className={`badge badge-${status}`} style={{ textTransform: 'capitalize' }}>{status}</span>
                 </div>
               </div>
             )

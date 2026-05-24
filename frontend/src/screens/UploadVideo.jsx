@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { useNavigate } from 'react-router-dom'
-import { Upload, Video, Image, X, ChevronRight } from 'lucide-react'
+import { Upload, Video, Image as ImageIcon, X, ChevronRight, FileVideo, FileImage, Clock } from 'lucide-react'
 import ReactPlayer from 'react-player'
 import { usePost } from '../context/PostContext'
 import { useAuth } from '../context/AuthContext'
@@ -71,7 +71,6 @@ export default function UploadVideo() {
       formData.append('media_type', isImage ? 'image' : 'video')
 
       const { video_id, original_url } = await uploadVideo(formData, setUploadProgress)
-      // Apply profile auto-edit defaults
       const editOptions = {
         crop: profile?.auto_crop ?? true,
         cut: profile?.auto_cut ?? true,
@@ -97,78 +96,122 @@ export default function UploadVideo() {
   const formatDuration = (s) => s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${s % 60}s`
 
   return (
-    <div style={{ padding: '0 16px 16px' }}>
-      <div style={{ padding: '20px 0 16px' }}>
-        <div style={{ fontSize: 22, fontFamily: 'Syne', fontWeight: 800 }}>Upload Media</div>
-        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>Step 1 of {isImage ? '3' : '4'}</div>
+    <div className="screen-pad">
+      {/* Header */}
+      <div style={{ marginBottom: 20 }}>
+        <div className="t-label" style={{ marginBottom: 6 }}>Step 1 of {isImage ? '3' : '4'}</div>
+        <div className="t-display">Upload media</div>
+        <div className="t-body-sm" style={{ marginTop: 4 }}>Pick a file and add the basics.</div>
       </div>
 
-      {/* Video / Image toggle */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20, background: 'rgba(255,255,255,0.04)', padding: 4, borderRadius: 12 }}>
-        {[{ mode: 'video', icon: <Video size={15} />, label: 'Video' }, { mode: 'image', icon: <Image size={15} />, label: 'Image' }].map(({ mode, icon, label }) => (
-          <button key={mode} onClick={() => switchMode(mode)}
-            style={{ flex: 1, padding: '9px 4px', borderRadius: 8, border: 'none', background: postState.mediaType === mode ? '#7c3aed' : 'transparent', color: postState.mediaType === mode ? 'white' : 'rgba(255,255,255,0.4)', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'all 0.2s' }}>
-            {icon} {label}
-          </button>
-        ))}
+      {/* Segmented control: Video / Image */}
+      <div style={{
+        display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4,
+        background: 'var(--bg-elevated)',
+        padding: 4, borderRadius: 12,
+        border: '1px solid var(--border-subtle)',
+        marginBottom: 20
+      }}>
+        {[
+          { mode: 'video', icon: <Video size={15} />, label: 'Video' },
+          { mode: 'image', icon: <ImageIcon size={15} />, label: 'Image' }
+        ].map(({ mode, icon, label }) => {
+          const active = postState.mediaType === mode
+          return (
+            <button
+              key={mode}
+              onClick={() => switchMode(mode)}
+              style={{
+                minHeight: 40, border: 'none', borderRadius: 9,
+                background: active ? 'var(--accent)' : 'transparent',
+                color: active ? 'white' : 'var(--text-secondary)',
+                fontSize: 14, fontWeight: 600,
+                cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                transition: 'background 0.15s, color 0.15s'
+              }}
+            >
+              {icon} {label}
+            </button>
+          )
+        })}
       </div>
 
       {/* Dropzone */}
       {!postState.videoFile ? (
-        <div {...getRootProps()} style={{ border: `2px dashed ${isDragActive ? '#7c3aed' : 'rgba(255,255,255,0.15)'}`, borderRadius: 20, padding: '48px 24px', textAlign: 'center', cursor: 'pointer', background: isDragActive ? 'rgba(124,58,237,0.08)' : 'rgba(255,255,255,0.02)', transition: 'all 0.2s', marginBottom: 20 }}>
+        <div
+          {...getRootProps()}
+          style={{
+            border: `2px dashed ${isDragActive ? 'var(--accent)' : 'var(--border-strong)'}`,
+            borderRadius: 16,
+            padding: '40px 24px',
+            textAlign: 'center',
+            cursor: 'pointer',
+            background: isDragActive ? 'var(--accent-soft)' : 'var(--bg-elevated)',
+            transition: 'all 0.15s',
+            marginBottom: 24
+          }}
+        >
           <input {...getInputProps()} />
-          <div style={{ width: 72, height: 72, borderRadius: 20, background: 'rgba(124,58,237,0.12)', border: '1px solid rgba(124,58,237,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-            {isDragActive ? <Upload size={36} color="#7c3aed" /> : isImage ? <Image size={36} color="#7c3aed" /> : <Video size={36} color="#7c3aed" />}
+          <div className="avatar-icon" style={{ width: 56, height: 56, margin: '0 auto 14px' }}>
+            {isDragActive ? <Upload size={26} /> : isImage ? <FileImage size={26} /> : <FileVideo size={26} />}
           </div>
-          <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 8 }}>
-            {isDragActive ? 'Drop here' : isImage ? 'Tap to select image' : 'Tap to select video'}
+          <div className="t-h2" style={{ marginBottom: 6 }}>
+            {isDragActive ? 'Drop to upload' : isImage ? 'Tap to select image' : 'Tap to select video'}
           </div>
-          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>
-            {isImage ? 'JPG, PNG, GIF, WebP — up to 10GB' : 'MP4, MOV, AVI, MKV, WebM — up to 10GB'}
+          <div className="t-body-sm">
+            {isImage ? 'JPG, PNG, GIF, WebP · up to 10 GB' : 'MP4, MOV, AVI, MKV, WebM · up to 10 GB'}
           </div>
         </div>
       ) : (
-        <div className="card" style={{ padding: 16, marginBottom: 20 }}>
+        <div className="card" style={{ padding: 12, marginBottom: 24 }}>
           {isImage ? (
-            <img src={postState.videoMeta.previewUrl} alt="preview"
-              style={{ width: '100%', maxHeight: 280, objectFit: 'contain', borderRadius: 12, marginBottom: 12, background: 'rgba(0,0,0,0.3)' }} />
+            <img
+              src={postState.videoMeta.previewUrl}
+              alt="preview"
+              style={{ width: '100%', maxHeight: 260, objectFit: 'contain', borderRadius: 10, marginBottom: 12, background: 'var(--bg-sunken)' }}
+            />
           ) : (
-            <div style={{ position: 'relative', paddingTop: '56.25%', borderRadius: 12, overflow: 'hidden', marginBottom: 12 }}>
+            <div style={{ position: 'relative', paddingTop: '56.25%', borderRadius: 10, overflow: 'hidden', marginBottom: 12, background: 'var(--bg-sunken)' }}>
               <div style={{ position: 'absolute', inset: 0 }}>
                 <ReactPlayer url={postState.videoMeta.previewUrl} width="100%" height="100%" controls light />
               </div>
             </div>
           )}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4, maxWidth: 280, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{postState.videoMeta.name}</div>
-              <div style={{ display: 'flex', gap: 12, fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>
-                <span>📁 {postState.videoMeta.size}MB</span>
-                {!isImage && <span>⏱ {formatDuration(postState.videoMeta.duration)}</span>}
+          <div className="row-between" style={{ padding: '4px 4px 0' }}>
+            <div className="grow" style={{ minWidth: 0 }}>
+              <div className="t-h3 truncate-1">{postState.videoMeta.name}</div>
+              <div className="row" style={{ marginTop: 4, gap: 12 }}>
+                <span className="t-caption">{postState.videoMeta.size} MB</span>
+                {!isImage && postState.videoMeta.duration > 0 && (
+                  <span className="t-caption row" style={{ gap: 4 }}>
+                    <Clock size={11} /> {formatDuration(postState.videoMeta.duration)}
+                  </span>
+                )}
               </div>
             </div>
-            <button onClick={removeFile} style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', color: '#f87171', borderRadius: 8, padding: 8, cursor: 'pointer' }}>
-              <X size={16} />
+            <button onClick={removeFile} className="btn-danger btn-sm" style={{ width: 'auto', padding: '0 12px' }}>
+              <X size={14} /> Remove
             </button>
           </div>
         </div>
       )}
 
       {/* Form */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div className="stack-lg">
         <div>
-          <label style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', marginBottom: 6, display: 'block', fontWeight: 600 }}>Title *</label>
-          <input className="input" type="text" placeholder="Enter title..." value={postState.title} onChange={e => updatePost({ title: e.target.value })} maxLength={200} />
+          <label className="input-label">Title <span style={{ color: 'var(--danger)' }}>*</span></label>
+          <input className="input" type="text" placeholder="Enter a clear title…" value={postState.title} onChange={e => updatePost({ title: e.target.value })} maxLength={200} />
         </div>
 
         <div>
-          <label style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', marginBottom: 6, display: 'block', fontWeight: 600 }}>Caption / Description</label>
-          <textarea className="input" rows={4} placeholder="Write a caption (optional)..." value={postState.description} onChange={e => updatePost({ description: e.target.value })} maxLength={500} />
-          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginTop: 4, textAlign: 'right' }}>{postState.description?.length || 0}/500</div>
+          <label className="input-label">Caption / description</label>
+          <textarea className="input" rows={4} placeholder="Write a caption (optional)…" value={postState.description} onChange={e => updatePost({ description: e.target.value })} maxLength={500} />
+          <div className="t-caption" style={{ marginTop: 6, textAlign: 'right' }}>{postState.description?.length || 0} / 500</div>
         </div>
 
         <div>
-          <label style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', marginBottom: 6, display: 'block', fontWeight: 600 }}>Category</label>
+          <label className="input-label">Category</label>
           <select className="input" value={postState.category} onChange={e => updatePost({ category: e.target.value })}>
             {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
@@ -176,31 +219,53 @@ export default function UploadVideo() {
 
         {!isImage && (
           <div>
-            <label style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', marginBottom: 6, display: 'block', fontWeight: 600 }}>Video Quality</label>
-            <div style={{ display: 'flex', gap: 10 }}>
-              {['original', 'compressed'].map(q => (
-                <button key={q} onClick={() => updatePost({ quality: q })} style={{ flex: 1, padding: '12px', borderRadius: 10, border: `1px solid ${postState.quality === q ? '#7c3aed' : 'rgba(255,255,255,0.1)'}`, background: postState.quality === q ? 'rgba(124,58,237,0.15)' : 'transparent', color: postState.quality === q ? '#c4b5fd' : 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: 14, fontWeight: 600, textTransform: 'capitalize' }}>
-                  {q === 'original' ? '🎬 Original' : '⚡ Compressed'}
-                </button>
-              ))}
+            <label className="input-label">Video quality</label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              {[
+                { key: 'original', label: 'Original' },
+                { key: 'compressed', label: 'Compressed' }
+              ].map(({ key, label }) => {
+                const active = postState.quality === key
+                return (
+                  <button
+                    key={key}
+                    onClick={() => updatePost({ quality: key })}
+                    style={{
+                      minHeight: 44,
+                      padding: '0 12px',
+                      borderRadius: 10,
+                      border: `1px solid ${active ? 'var(--accent)' : 'var(--border-strong)'}`,
+                      background: active ? 'var(--accent-soft)' : 'var(--bg-elevated)',
+                      color: active ? 'var(--accent)' : 'var(--text-secondary)',
+                      cursor: 'pointer', fontSize: 14, fontWeight: 600
+                    }}
+                  >
+                    {label}
+                  </button>
+                )
+              })}
             </div>
           </div>
         )}
       </div>
 
-      <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {/* CTA */}
+      <div style={{ marginTop: 28 }}>
         {uploading && (
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 13 }}>
-              <span>Uploading...</span><span>{uploadProgress}%</span>
+          <div style={{ marginBottom: 12 }}>
+            <div className="row-between" style={{ marginBottom: 6 }}>
+              <span className="t-body-sm">Uploading…</span>
+              <span className="t-body-sm t-mono">{uploadProgress}%</span>
             </div>
             <div className="progress-bar"><div className="progress-fill" style={{ width: `${uploadProgress}%` }} /></div>
           </div>
         )}
-        <button className="btn-primary" onClick={handleNext} disabled={uploading || !postState.videoFile} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-          {uploading ? <><div className="spinner" style={{ width: 18, height: 18 }} /> Uploading...</>
-            : isImage ? <>Next: Select Targets <ChevronRight size={18} /></>
-            : <>Next: Auto Edit <ChevronRight size={18} /></>}
+        <button className="btn-primary" onClick={handleNext} disabled={uploading || !postState.videoFile}>
+          {uploading ? (
+            <><div className="spinner" style={{ width: 16, height: 16 }} /> Uploading…</>
+          ) : (
+            <>Continue <ChevronRight size={18} /></>
+          )}
         </button>
       </div>
     </div>
