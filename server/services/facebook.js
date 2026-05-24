@@ -74,7 +74,16 @@ const uploadToAllPagesByUrl = async (pages, videoUrl, title, description, delayS
     }
     try {
       onProgress && onProgress({ type: 'progress', platform: 'facebook', target_id: `fb_${page.page_id}`, target_name: page.page_name, status: 'uploading', progress: 20 })
-      const result = await retry(() => uploadVideoToPageByUrl(page.page_access_token, page.page_id, { videoUrl, title, description }), 3, 60)
+      const result = await retry(
+        () => uploadVideoToPageByUrl(page.page_access_token, page.page_id, { videoUrl, title, description }),
+        3, 15,
+        ({ attempt, maxRetries, error }) => onProgress && onProgress({
+          type: 'progress', platform: 'facebook',
+          target_id: `fb_${page.page_id}`, target_name: page.page_name,
+          status: 'uploading', progress: 10,
+          error_message: `Retry ${attempt}/${maxRetries - 1}: ${error}`
+        })
+      )
       results.push({ page_id: page.page_id, page_name: page.page_name, status: 'published', ...result })
       onProgress && onProgress({ type: 'progress', platform: 'facebook', target_id: `fb_${page.page_id}`, target_name: page.page_name, status: 'published', progress: 100, post_url: result.post_url })
     } catch (err) {

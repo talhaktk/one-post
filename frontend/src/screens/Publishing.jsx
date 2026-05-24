@@ -2,13 +2,16 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Copy, ExternalLink, Calendar, Sparkles, Home, Plus } from 'lucide-react'
 import { usePost } from '../context/PostContext'
+import { useAuth } from '../context/AuthContext'
 import { publishPost, getPublishProgress } from '../lib/api'
+import { supabase } from '../lib/supabase'
 import ProgressCard from '../components/ProgressCard'
 import toast from 'react-hot-toast'
 
 export default function Publishing() {
   const navigate = useNavigate()
   const { postState, resetPost } = usePost()
+  const { user } = useAuth()
   const [, setJobId] = useState(null)
   const [targets, setTargets] = useState([])
   const [done, setDone] = useState(false)
@@ -31,7 +34,7 @@ export default function Publishing() {
         media_type: postState.mediaType || 'video'
       }
 
-      const initTargets = buildInitialTargets()
+      const initTargets = await buildInitialTargets()
       setTargets(initTargets)
 
       const { job_id } = await publishPost(payload)
@@ -55,24 +58,76 @@ export default function Publishing() {
     return t
   }
 
-  const buildInitialTargets = () => {
+  const buildInitialTargets = async () => {
     const t = []
     if (postState.targets.youtube) t.push({ id: 'youtube', platform: 'youtube', target_name: 'YouTube', status: 'queued', progress: 0 })
     if (postState.targets.instagram_reels) t.push({ id: 'ig_reels', platform: 'instagram_reels', target_name: 'Instagram Reels', status: 'queued', progress: 0 })
     if (postState.targets.instagram_feed) t.push({ id: 'ig_feed', platform: 'instagram_feed', target_name: 'Instagram Feed', status: 'queued', progress: 0 })
-    if (postState.targets.facebook) {
-      postState.selectedFacebookPages.slice(0, 3).forEach((pageId, i) => {
-        t.push({ id: `fb_${pageId}`, platform: 'facebook', target_name: `Facebook Page ${i + 1}`, status: 'queued', progress: 0 })
-      })
-      if (postState.selectedFacebookPages.length > 3) {
-        t.push({ id: 'fb_more', platform: 'facebook', target_name: `+ ${postState.selectedFacebookPages.length - 3} more pages`, status: 'queued', progress: 0 })
+
+    // Fetch real Facebook page names so cards match SSE target_ids and progress counter is accurate
+    if (postState.targets.facebook && postState.selectedFacebookPages.length) {
+      try {
+        const { data: pages } = await supabase
+          .from('facebook_pages')
+          .select('page_id, page_name, fan_count')
+          .eq('user_id', user.id)
+          .in('page_id', postState.selectedFacebookPages)
+          .eq('is_active', true)
+          .order('fan_count', { ascending: false })
+        if (pages?.length) {
+          pages.forEach(p => {
+            t.push({
+              id: `fb_${p.page_id}`,
+              platform: 'facebook',
+              target_name: p.page_name,
+              status: 'queued',
+              progress: 0
+            })
+          })
+        } else {
+          // Fallback if DB call fails: minimal placeholders by id
+          postState.selectedFacebookPages.forEach(pageId => {
+            t.push({ id: `fb_${pageId}`, platform: 'facebook', target_name: 'Facebook page', status: 'queued', progress: 0 })
+          })
+        }
+      } catch {
+        postState.selectedFacebookPages.forEach(pageId => {
+          t.push({ id: `fb_${pageId}`, platform: 'facebook', target_name: 'Facebook page', status: 'queued', progress: 0 })
+        })
       }
     }
-    if (postState.targets.tiktok) {
-      postState.selectedTikTokAccounts.forEach((accId, i) => {
-        t.push({ id: `tiktok_${accId}`, platform: 'tiktok', target_name: `TikTok Account ${i + 1}`, status: 'queued', progress: 0 })
-      })
+
+    // Fetch real TikTok account names
+    if (postState.targets.tiktok && postState.selectedTikTokAccounts.length) {
+      try {
+        const { data: accts } = await supabase
+          .from('tiktok_accounts')
+          .select('id, username, display_name')
+          .eq('user_id', user.id)
+          .in('id', postState.selectedTikTokAccounts)
+          .eq('is_active', true)
+        if (accts?.length) {
+          accts.forEach(a => {
+            t.push({
+              id: `tiktok_${a.id}`,
+              platform: 'tiktok',
+              target_name: a.display_name || a.username || 'TikTok',
+              status: 'queued',
+              progress: 0
+            })
+          })
+        } else {
+          postState.selectedTikTokAccounts.forEach(accId => {
+            t.push({ id: `tiktok_${accId}`, platform: 'tiktok', target_name: 'TikTok account', status: 'queued', progress: 0 })
+          })
+        }
+      } catch {
+        postState.selectedTikTokAccounts.forEach(accId => {
+          t.push({ id: `tiktok_${accId}`, platform: 'tiktok', target_name: 'TikTok account', status: 'queued', progress: 0 })
+        })
+      }
     }
+
     if (postState.targets.twitter) t.push({ id: 'twitter', platform: 'twitter', target_name: 'X / Twitter', status: 'queued', progress: 0 })
     return t
   }
