@@ -223,16 +223,25 @@ const publishJob = async (jobId, payload, userId) => {
 
 const publishScheduledPost = async (post) => {
   // Adapt scheduled post to publish format
+  const isImage = post.media_type === 'image'
   const targets = []
-  if (post.target_platforms?.youtube) targets.push({ platform: 'youtube' })
-  if (post.target_platforms?.instagram_reels) targets.push({ platform: 'instagram_reels' })
-  if (post.target_platforms?.instagram_feed) targets.push({ platform: 'instagram_feed' })
+  if (post.target_platforms?.youtube && !isImage) targets.push({ platform: 'youtube' })
+  if (post.target_platforms?.instagram_reels && !isImage) targets.push({ platform: 'instagram_reels' })
+  if (post.target_platforms?.instagram_feed && !isImage) targets.push({ platform: 'instagram_feed' })
+  if (post.target_platforms?.instagram_image && isImage) targets.push({ platform: 'instagram_image' })
   if (post.target_facebook_pages?.length) targets.push({ platform: 'facebook', page_ids: post.target_facebook_pages })
-  if (post.target_tiktok_accounts?.length) targets.push({ platform: 'tiktok', account_ids: post.target_tiktok_accounts })
+  if (post.target_tiktok_accounts?.length && !isImage) targets.push({ platform: 'tiktok', account_ids: post.target_tiktok_accounts })
   if (post.target_platforms?.twitter) targets.push({ platform: 'twitter' })
 
   const jobId = `scheduled_${post.id}`
-  return await publishJob(jobId, { video_id: post.video_id, targets, hashtags_per_platform: post.hashtags_per_platform || {}, title: post.title, description: post.caption_english }, post.user_id)
+  return await publishJob(jobId, {
+    video_id: post.video_id,
+    targets,
+    hashtags_per_platform: post.hashtags_per_platform || {},
+    title: post.title,
+    description: post.caption_english,
+    media_type: post.media_type || 'video'
+  }, post.user_id)
 }
 
 module.exports = { publishJob, publishScheduledPost }

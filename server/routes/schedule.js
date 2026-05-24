@@ -5,26 +5,68 @@ const path = require('path')
 const fs = require('fs')
 const { v4: uuidv4 } = require('uuid')
 const auth = require('../middleware/auth')
-const { publishJob } = require('../services/publishService')
 
 const router = express.Router()
 const supabase = require('../lib/supabase')
-const upload = multer({ storage: multer.diskStorage({ destination: os.tmpdir(), filename: (req, f, cb) => cb(null, `sched_${uuidv4()}${path.extname(f.originalname)}`) }) })
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: os.tmpdir(),
+    filename: (req, f, cb) => cb(null, `sched_${uuidv4()}${path.extname(f.originalname)}`)
+  }),
+  limits: { fileSize: 10 * 1024 * 1024 * 1024 }
+})
 
 router.post('/create', auth, upload.single('video'), async (req, res) => {
   try {
-    const { title, caption_urdu, caption_english, hashtags_per_platform, target_platforms, target_facebook_pages, target_tiktok_accounts, scheduled_at, timezone, is_recurring, recurrence_rule } = req.body
+    const {
+      title, caption_urdu, caption_english,
+      hashtags_per_platform, target_platforms,
+      target_facebook_pages, target_tiktok_accounts,
+      scheduled_at, timezone, is_recurring, recurrence_rule,
+      media_type = 'video'
+    } = req.body
 
     if (!scheduled_at || new Date(scheduled_at) <= new Date()) {
       return res.status(400).json({ error: 'Scheduled time must be in the future' })
     }
 
+    const isImage = media_type === 'image'
+
     let videoId = null
     if (req.file) {
-      const { data: videoData } = await supabase.from('videos').insert({
-        user_id: req.user.id, title, duration_seconds: 0,
+      // Upload to Supabase storage (videos or images bucket)
+      const bucket = isImage ? 'images' : 'videos'
+      const storagePath = `${bucket}/${req.user.id}/${uuidv4()}${path.extname(req.file.originalname)}`
+      const fileBuffer = fs.readFileSync(req.file.path)
+      const { error: uploadErr } = await supabase.storage.from(bucket).upload(storagePath, fileBuffer, { contentType: req.file.mimetype })
+      if (uploadErr) {
+        fs.unlinkSync(req.file.path)
+        return res.status(500).json({ error: `Storage upload failed (bucket="${bucket}"): ${uploadErr.message}. Make sure the "${bucket}" bucket exists in Supabase Storage.` })
+      }
+      const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(storagePath)
+
+      const baseRecord = {
+        user_id: req.user.id,
+        title,
+        original_url: urlData.publicUrl,
+        duration_seconds: 0,
         file_size_mb: parseFloat((req.file.size / 1024 / 1024).toFixed(2))
-      }).select().single()
+      }
+
+      // Try with media_type; fall back without it if column missing
+      let { data: videoData, error: insertErr } = await supabase.from('videos')
+        .insert({ ...baseRecord, media_type }).select().single()
+
+      if (insertErr && insertErr.message && insertErr.message.includes('media_type')) {
+        ;({ data: videoData, error: insertErr } = await supabase.from('videos')
+          .insert(baseRecord).select().single())
+      }
+
+      if (insertErr) {
+        fs.unlinkSync(req.file.path)
+        return res.status(500).json({ error: 'DB insert failed: ' + insertErr.message })
+      }
+
       videoId = videoData.id
       fs.unlinkSync(req.file.path)
     }
@@ -43,12 +85,32 @@ router.post('/create', auth, upload.single('video'), async (req, res) => {
       timezone: timezone || 'Asia/Karachi',
       status: 'scheduled',
       is_recurring: is_recurring === 'true',
-      recurrence_rule: is_recurring === 'true' ? recurrence_rule : null
+      recurrence_rule: is_recurring === 'true' ? recurrence_rule : null,
+      media_type
     }).select().single()
+
+    // If scheduled_posts table doesn't have media_type column yet, retry without it
+    if (error && error.message && error.message.includes('media_type')) {
+      const { data: data2, error: err2 } = await supabase.from('scheduled_posts').insert({
+        user_id: req.user.id, video_id: videoId, title,
+        caption_urdu, caption_english,
+        hashtags_per_platform: hashtags_per_platform ? JSON.parse(hashtags_per_platform) : {},
+        target_platforms: target_platforms ? JSON.parse(target_platforms) : {},
+        target_facebook_pages: target_facebook_pages ? JSON.parse(target_facebook_pages) : [],
+        target_tiktok_accounts: target_tiktok_accounts ? JSON.parse(target_tiktok_accounts) : [],
+        scheduled_at, timezone: timezone || 'Asia/Karachi',
+        status: 'scheduled',
+        is_recurring: is_recurring === 'true',
+        recurrence_rule: is_recurring === 'true' ? recurrence_rule : null
+      }).select().single()
+      if (err2) return res.status(500).json({ error: err2.message })
+      return res.json({ scheduled_post: data2 })
+    }
 
     if (error) return res.status(500).json({ error: error.message })
     res.json({ scheduled_post: data })
   } catch (err) {
+    console.error('Schedule create error:', err)
     res.status(500).json({ error: err.message })
   }
 })
