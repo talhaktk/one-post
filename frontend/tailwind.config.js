@@ -26,11 +26,11 @@ export default {
           disabled: 'rgba(245,245,247,0.25)'
         },
         accent: {
-          DEFAULT: '#7c3aed',
-          hover: '#8b5cf6',
-          soft: 'rgba(124,58,237,0.14)',
-          light: '#8b5cf6',
-          dark: '#5b21b6'
+          DEFAULT: '#f97316',
+          hover: '#fb923c',
+          soft: 'rgba(249,115,22,0.14)',
+          light: '#fb923c',
+          dark: '#c2410c'
         },
         success: '#10b981',
         warning: '#f59e0b',

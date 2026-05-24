@@ -21,15 +21,15 @@ export default function VideoPreviewCard({ platform, url, thumbnail }) {
 
   return (
     <div style={{ marginBottom: 8 }}>
-      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 6, fontWeight: 600 }}>{label}</div>
-      <div style={{ position: 'relative', paddingTop, background: '#000', borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>
+      <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6, fontWeight: 600 }}>{label}</div>
+      <div style={{ position: 'relative', paddingTop, background: '#000', borderRadius: 12, overflow: 'hidden', border: '1px solid var(--border-subtle)' }}>
         <div style={{ position: 'absolute', inset: 0 }}>
           {url ? (
             <ReactPlayer url={url} width="100%" height="100%" light={thumbnail} controls pip playing={false} />
           ) : thumbnail ? (
             <img src={thumbnail} alt={label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           ) : (
-            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.2)', fontSize: 40 }}>🎬</div>
+            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-disabled)', fontSize: 40 }}>🎬</div>
           )}
         </div>
       </div>

@@ -3,30 +3,67 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  /* Surfaces */
+:root,
+:root[data-theme="light"] {
+  /* LIGHT THEME (default) */
+  --bg-base: #fafaf9;
+  --bg-elevated: #ffffff;
+  --bg-hover: #f5f5f4;
+  --bg-sunken: #f4f4f0;
+  --nav-bg: rgba(255,255,255,0.92);
+  --shadow-card: 0 1px 2px rgba(10,10,15,0.04), 0 1px 4px rgba(10,10,15,0.03);
+
+  --border-subtle: rgba(10,10,15,0.06);
+  --border-strong: rgba(10,10,15,0.12);
+
+  --text-primary: #18181b;
+  --text-secondary: rgba(24,24,27,0.68);
+  --text-tertiary: rgba(24,24,27,0.45);
+  --text-disabled: rgba(24,24,27,0.25);
+
+  --accent: #f97316;
+  --accent-hover: #ea580c;
+  --accent-soft: rgba(249,115,22,0.12);
+  --accent-ring: rgba(249,115,22,0.28);
+
+  --success: #059669;
+  --warning: #d97706;
+  --danger: #dc2626;
+  --info: #2563eb;
+
+  --success-soft: rgba(5,150,105,0.12);
+  --warning-soft: rgba(217,119,6,0.12);
+  --danger-soft: rgba(220,38,38,0.12);
+  --info-soft: rgba(37,99,235,0.12);
+
+  --bg-deep: var(--bg-base);
+  --bg-mid: var(--bg-elevated);
+
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  /* DARK THEME */
   --bg-base: #0a0b12;
   --bg-elevated: #15161f;
   --bg-hover: #1d1e29;
   --bg-sunken: #060710;
+  --nav-bg: rgba(10,11,18,0.88);
+  --shadow-card: none;
 
-  /* Borders */
   --border-subtle: rgba(255,255,255,0.06);
   --border-strong: rgba(255,255,255,0.12);
 
-  /* Text */
   --text-primary: #f5f5f7;
   --text-secondary: rgba(245,245,247,0.65);
   --text-tertiary: rgba(245,245,247,0.45);
   --text-disabled: rgba(245,245,247,0.25);
 
-  /* Accent */
-  --accent: #7c3aed;
-  --accent-hover: #8b5cf6;
-  --accent-soft: rgba(124,58,237,0.14);
-  --accent-ring: rgba(124,58,237,0.32);
+  --accent: #f97316;
+  --accent-hover: #fb923c;
+  --accent-soft: rgba(249,115,22,0.14);
+  --accent-ring: rgba(249,115,22,0.32);
 
-  /* Semantic */
   --success: #10b981;
   --warning: #f59e0b;
   --danger: #ef4444;
@@ -37,9 +74,7 @@
   --danger-soft: rgba(239,68,68,0.14);
   --info-soft: rgba(59,130,246,0.14);
 
-  /* Legacy aliases (so untouched screens still render) */
-  --bg-deep: var(--bg-base);
-  --bg-mid: var(--bg-elevated);
+  color-scheme: dark;
 }
 
 * {
@@ -156,6 +191,7 @@ body {
   border: 1px solid var(--border-subtle);
   border-radius: 14px;
   padding: 16px;
+  box-shadow: var(--shadow-card);
 }
 
 .card-flush     { padding: 0; }
@@ -166,8 +202,9 @@ body {
   border: 1px solid var(--border-subtle);
   border-radius: 14px;
   padding: 16px;
+  box-shadow: var(--shadow-card);
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, transform 0.05s;
+  transition: background 0.15s, border-color 0.15s, transform 0.05s, box-shadow 0.15s;
 }
 .card-interactive:hover  { background: var(--bg-hover); border-color: var(--border-strong); }
 .card-interactive:active { transform: scale(0.995); }

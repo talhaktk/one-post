@@ -5,16 +5,7 @@ import { RefreshCw, ExternalLink, Trash2, ChevronDown, ChevronUp, ArrowLeft, Inb
 import api from '../lib/api'
 import { supabase } from '../lib/supabase'
 import toast from 'react-hot-toast'
-
-const PLATFORM_LETTERS = {
-  youtube: 'YT', instagram: 'IG', instagram_reels: 'IG', instagram_feed: 'IG',
-  instagram_image: 'IG', facebook: 'f', tiktok: 'TT', twitter: '𝕏'
-}
-const PLATFORM_COLORS = {
-  youtube: '#FF0000', instagram: '#E1306C', instagram_reels: '#E1306C',
-  instagram_feed: '#833AB4', instagram_image: '#E1306C',
-  facebook: '#1877F2', tiktok: '#69C9D0', twitter: '#ffffff'
-}
+import PlatformIcon, { PLATFORM_BRAND_COLOR } from '../components/PlatformIcon'
 
 const STATUS_COLOR = {
   published: 'var(--success)',
@@ -33,14 +24,15 @@ function getOverallStatus(posts) {
   return 'partial'
 }
 
-const PlatformBadge = ({ platform }) => (
+const PlatformBadge = ({ platform, size = 22 }) => (
   <span style={{
-    width: 22, height: 22, borderRadius: 6,
-    background: `${PLATFORM_COLORS[platform] || 'var(--accent)'}22`,
-    color: PLATFORM_COLORS[platform] || 'var(--accent)',
-    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-    fontSize: 11, fontWeight: 700
-  }}>{PLATFORM_LETTERS[platform] || '·'}</span>
+    width: size, height: size, borderRadius: 6,
+    background: `${PLATFORM_BRAND_COLOR[platform] || 'var(--accent)'}1f`,
+    color: PLATFORM_BRAND_COLOR[platform] || 'var(--accent)',
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center'
+  }}>
+    <PlatformIcon platform={platform} size={size === 22 ? 12 : Math.round(size * 0.55)} />
+  </span>
 )
 
 export default function History() {

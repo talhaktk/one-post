@@ -1,16 +1,8 @@
 import { CheckCircle, XCircle, Link } from 'lucide-react'
-
-const PLATFORM_COLORS = {
-  youtube: '#FF0000', instagram: '#E1306C', facebook: '#1877F2',
-  tiktok: '#69C9D0', twitter: '#FFFFFF'
-}
-
-const PLATFORM_LETTERS = {
-  youtube: 'YT', instagram: 'IG', facebook: 'f', tiktok: 'TT', twitter: '𝕏'
-}
+import PlatformIcon, { PLATFORM_BRAND_COLOR } from './PlatformIcon'
 
 export default function PlatformCard({ platform, account, onConnect, onDisconnect, loading }) {
-  const color = PLATFORM_COLORS[platform] || '#7c3aed'
+  const color = PLATFORM_BRAND_COLOR[platform] || '#f97316'
   const connected = !!account?.is_active
 
   return (
@@ -18,11 +10,10 @@ export default function PlatformCard({ platform, account, onConnect, onDisconnec
       <div className="row" style={{ gap: 12 }}>
         <div style={{
           width: 44, height: 44, borderRadius: 10,
-          background: `${color}22`, color,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 14, fontWeight: 700, flexShrink: 0
+          background: `${color}1f`, color,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
         }}>
-          {PLATFORM_LETTERS[platform] || '·'}
+          <PlatformIcon platform={platform} size={20} />
         </div>
 
         <div className="grow" style={{ flex: 1, minWidth: 0 }}>

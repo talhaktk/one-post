@@ -1,11 +1,13 @@
 import { useState } from 'react'
-import { LogOut, Link2, Trash2, Key } from 'lucide-react'
+import { LogOut, Link2, Trash2, Key, Sun, Moon } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 
 export default function Settings() {
   const { user, profile, signOut, updateProfile } = useAuth()
+  const { theme, setTheme } = useTheme()
   const navigate = useNavigate()
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({
@@ -34,7 +36,7 @@ export default function Settings() {
   }
 
   const Toggle = ({ value, onChange, label }) => (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--border-subtle)' }}>
       <div style={{ fontSize: 14, fontWeight: 600 }}>{label}</div>
       <div className={`toggle ${value ? 'active' : ''}`} onClick={() => onChange(!value)} />
     </div>
@@ -44,13 +46,13 @@ export default function Settings() {
     <div className="card" style={{ padding: 16, marginBottom: 12, cursor: 'pointer' }} onClick={() => navigate(to)}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(124,58,237,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{icon}</div>
+          <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(249,115,22,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{icon}</div>
           <div>
             <div style={{ fontWeight: 700, fontSize: 15 }}>{title}</div>
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>{sub}</div>
+            <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{sub}</div>
           </div>
         </div>
-        <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 20 }}>›</span>
+        <span style={{ color: 'var(--text-disabled)', fontSize: 20 }}>›</span>
       </div>
     </div>
   )
@@ -64,27 +66,57 @@ export default function Settings() {
       {/* Profile */}
       <div className="card" style={{ padding: '16px', marginBottom: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-          <div style={{ width: 52, height: 52, borderRadius: '50%', background: '#7c3aed', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 700, flexShrink: 0 }}>
+          <div style={{ width: 52, height: 52, borderRadius: '50%', background: '#f97316', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 700, flexShrink: 0 }}>
             {profile?.avatar_url ? <img src={profile.avatar_url} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : (profile?.full_name?.[0] || 'U').toUpperCase()}
           </div>
           <div>
             <div style={{ fontWeight: 700, fontSize: 16 }}>{profile?.full_name || 'User'}</div>
-            <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>{user?.email}</div>
+            <div style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>{user?.email}</div>
           </div>
         </div>
-        <label style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 6, display: 'block' }}>Display Name</label>
+        <label style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6, display: 'block' }}>Display Name</label>
         <input className="input" value={form.full_name} onChange={e => setForm(f => ({ ...f, full_name: e.target.value }))} />
       </div>
 
+      {/* Theme */}
+      <div className="card" style={{ padding: 16, marginBottom: 12 }}>
+        <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 12, color: 'var(--text-primary)' }}>Appearance</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          {[
+            { key: 'light', label: 'Light', Icon: Sun },
+            { key: 'dark',  label: 'Dark',  Icon: Moon }
+          ].map(({ key, label, Icon }) => {
+            const active = theme === key
+            return (
+              <button
+                key={key}
+                onClick={() => setTheme(key)}
+                style={{
+                  minHeight: 56,
+                  borderRadius: 10,
+                  border: `1px solid ${active ? 'var(--accent)' : 'var(--border-strong)'}`,
+                  background: active ? 'var(--accent-soft)' : 'var(--bg-elevated)',
+                  color: active ? 'var(--accent)' : 'var(--text-secondary)',
+                  cursor: 'pointer', fontSize: 14, fontWeight: 600,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
+                }}
+              >
+                <Icon size={16} /> {label}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
       {/* API Keys + Connect */}
-      <NavCard icon={<Key size={18} color="#7c3aed" />} title="API Keys" sub="Meta, YouTube, TikTok, Twitter, AI" to="/admin/config" />
-      <NavCard icon={<Link2 size={18} color="#7c3aed" />} title="Connect Accounts" sub="OAuth login for each platform after adding API keys" to="/accounts" />
+      <NavCard icon={<Key size={18} color="#f97316" />} title="API Keys" sub="Meta, YouTube, TikTok, Twitter, AI" to="/admin/config" />
+      <NavCard icon={<Link2 size={18} color="#f97316" />} title="Connect Accounts" sub="OAuth login for each platform after adding API keys" to="/accounts" />
 
       {/* Defaults */}
       <div className="card" style={{ padding: '16px', marginBottom: 12 }}>
         <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 14 }}>🌍 Defaults</div>
         <div style={{ marginBottom: 14 }}>
-          <label style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 6, display: 'block' }}>Country for Trends</label>
+          <label style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6, display: 'block' }}>Country for Trends</label>
           <select className="input" value={form.default_country} onChange={e => setForm(f => ({ ...f, default_country: e.target.value }))}>
             <option value="pakistan">🇵🇰 Pakistan</option>
             <option value="india">🇮🇳 India</option>
@@ -93,11 +125,11 @@ export default function Settings() {
           </select>
         </div>
         <div>
-          <label style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 6, display: 'block' }}>Caption Language</label>
+          <label style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6, display: 'block' }}>Caption Language</label>
           <div style={{ display: 'flex', gap: 8 }}>
             {['urdu', 'english', 'both'].map(lang => (
               <button key={lang} onClick={() => setForm(f => ({ ...f, default_caption_language: lang }))}
-                style={{ flex: 1, padding: 10, borderRadius: 10, border: `1px solid ${form.default_caption_language === lang ? '#7c3aed' : 'rgba(255,255,255,0.1)'}`, background: form.default_caption_language === lang ? 'rgba(124,58,237,0.15)' : 'transparent', color: form.default_caption_language === lang ? '#c4b5fd' : 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: 13, fontWeight: 600, textTransform: 'capitalize' }}>
+                style={{ flex: 1, padding: 10, borderRadius: 10, border: `1px solid ${form.default_caption_language === lang ? '#f97316' : 'var(--border-strong)'}`, background: form.default_caption_language === lang ? 'rgba(249,115,22,0.15)' : 'transparent', color: form.default_caption_language === lang ? '#fdba74' : 'var(--text-secondary)', cursor: 'pointer', fontSize: 13, fontWeight: 600, textTransform: 'capitalize' }}>
                 {lang}
               </button>
             ))}
@@ -111,7 +143,7 @@ export default function Settings() {
         <div style={{ display: 'flex', gap: 8 }}>
           {[10, 30, 60, 120].map(d => (
             <button key={d} onClick={() => setForm(f => ({ ...f, post_delay_seconds: d }))}
-              style={{ flex: 1, padding: '8px 4px', borderRadius: 8, border: `1px solid ${form.post_delay_seconds === d ? '#7c3aed' : 'rgba(255,255,255,0.1)'}`, background: form.post_delay_seconds === d ? 'rgba(124,58,237,0.15)' : 'transparent', color: form.post_delay_seconds === d ? '#c4b5fd' : 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: 11, fontWeight: 600 }}>
+              style={{ flex: 1, padding: '8px 4px', borderRadius: 8, border: `1px solid ${form.post_delay_seconds === d ? '#f97316' : 'var(--border-strong)'}`, background: form.post_delay_seconds === d ? 'rgba(249,115,22,0.15)' : 'transparent', color: form.post_delay_seconds === d ? '#fdba74' : 'var(--text-secondary)', cursor: 'pointer', fontSize: 11, fontWeight: 600 }}>
               {d >= 60 ? `${d/60}m` : `${d}s`}
             </button>
           ))}
@@ -137,7 +169,7 @@ export default function Settings() {
         </button>
       </div>
 
-      <div style={{ textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.2)', paddingBottom: 8 }}>OnePost v1.0.0</div>
+      <div style={{ textAlign: 'center', fontSize: 12, color: 'var(--text-disabled)', paddingBottom: 8 }}>OnePost v1.0.0</div>
     </div>
   )
 }

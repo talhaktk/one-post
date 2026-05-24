@@ -90,12 +90,12 @@ export default function AlertDetail() {
   }
 
   if (loading) return <div style={{ padding: 24 }}><LoadingSkeleton count={4} /></div>
-  if (!alert) return <div style={{ padding: 24, textAlign: 'center', color: 'rgba(255,255,255,0.4)' }}>Alert not found</div>
+  if (!alert) return <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-tertiary)' }}>Alert not found</div>
 
   return (
     <div style={{ padding: '0 16px 16px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '20px 0 16px' }}>
-        <button onClick={() => navigate('/alerts')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', padding: 0 }}>
+        <button onClick={() => navigate('/alerts')} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: 0 }}>
           <ArrowLeft size={22} />
         </button>
         <div style={{ fontSize: 18, fontFamily: 'Syne', fontWeight: 800 }}>Alert Detail</div>
@@ -106,28 +106,28 @@ export default function AlertDetail() {
         {alert.thumbnail_url ? (
           <img src={alert.thumbnail_url} alt="thumbnail" style={{ width: '100%', borderRadius: 14, maxHeight: 200, objectFit: 'cover' }} />
         ) : (
-          <div style={{ width: '100%', height: 160, background: 'rgba(255,255,255,0.04)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.2)', fontSize: 40 }}>🖼️</div>
+          <div style={{ width: '100%', height: 160, background: 'var(--bg-elevated)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-disabled)', fontSize: 40 }}>🖼️</div>
         )}
-        <label style={{ position: 'absolute', bottom: 10, right: 10, background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', fontSize: 12, color: 'white', display: 'flex', alignItems: 'center', gap: 6 }}>
+        <label style={{ position: 'absolute', bottom: 10, right: 10, background: 'rgba(0,0,0,0.7)', border: '1px solid var(--border-strong)', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', fontSize: 12, color: 'white', display: 'flex', alignItems: 'center', gap: 6 }}>
           <Image size={13} /> Replace Photo
           <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhotoUpload} />
         </label>
       </div>
 
       <div style={{ fontWeight: 800, fontSize: 16, lineHeight: 1.4, marginBottom: 6 }}>{alert.headline}</div>
-      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginBottom: 16 }}>Source: {alert.source_name} · {new Date(alert.detected_at).toLocaleString()}</div>
+      <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginBottom: 16 }}>Source: {alert.source_name} · {new Date(alert.detected_at).toLocaleString()}</div>
 
       {/* Captions */}
       <div className="card" style={{ padding: '16px', marginBottom: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
           <div style={{ display: 'flex', gap: 8 }}>
             {['urdu', 'english'].map(t => (
-              <button key={t} onClick={() => setCaptionTab(t)} style={{ padding: '5px 14px', borderRadius: 8, border: 'none', background: captionTab === t ? '#7c3aed' : 'rgba(255,255,255,0.08)', color: captionTab === t ? 'white' : 'rgba(255,255,255,0.5)', fontSize: 13, fontWeight: 600, cursor: 'pointer', textTransform: 'capitalize' }}>
+              <button key={t} onClick={() => setCaptionTab(t)} style={{ padding: '5px 14px', borderRadius: 8, border: 'none', background: captionTab === t ? '#f97316' : 'var(--border-subtle)', color: captionTab === t ? 'white' : 'var(--text-secondary)', fontSize: 13, fontWeight: 600, cursor: 'pointer', textTransform: 'capitalize' }}>
                 {t === 'urdu' ? 'اردو' : 'English'}
               </button>
             ))}
           </div>
-          <button onClick={handleRegenCaption} disabled={regenLoading} style={{ background: 'none', border: 'none', color: '#7c3aed', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 600 }}>
+          <button onClick={handleRegenCaption} disabled={regenLoading} style={{ background: 'none', border: 'none', color: '#f97316', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 600 }}>
             <RefreshCw size={13} /> Regenerate
           </button>
         </div>
@@ -138,7 +138,7 @@ export default function AlertDetail() {
       <div className="card" style={{ padding: '16px', marginBottom: 16 }}>
         <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 12 }}>Select Platforms</div>
         {['youtube', 'instagram', 'facebook', 'tiktok', 'twitter'].map(p => (
-          <div key={p} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+          <div key={p} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid var(--border-subtle)' }}>
             <span style={{ fontSize: 14, fontWeight: 600, textTransform: 'capitalize' }}>{p === 'twitter' ? 'X (Twitter)' : p}</span>
             <div className={`toggle ${targets[p] ? 'active' : ''}`} onClick={() => setTargets(prev => ({ ...prev, [p]: !prev[p] }))} />
           </div>
@@ -146,7 +146,7 @@ export default function AlertDetail() {
 
         {targets.facebook && fbPages.length > 0 && (
           <div style={{ marginTop: 12 }}>
-            <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginBottom: 8 }}>{selectedPages.size} pages selected</div>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8 }}>{selectedPages.size} pages selected</div>
             <div style={{ maxHeight: 200, overflowY: 'auto' }}>
               {fbPages.map(page => (
                 <FacebookPageItem key={page.id} page={page} selected={selectedPages.has(page.page_id)} onToggle={(pid) => {

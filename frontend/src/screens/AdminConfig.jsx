@@ -57,13 +57,13 @@ export default function AdminConfig() {
   return (
     <div style={{ padding: '0 16px 100px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '20px 0 8px' }}>
-        <button onClick={() => navigate('/settings')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'white', padding: 4 }}>
+        <button onClick={() => navigate('/settings')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-primary)', padding: 4 }}>
           <ArrowLeft size={20} />
         </button>
         <div style={{ fontSize: 22, fontFamily: 'Syne', fontWeight: 800 }}>API Keys</div>
       </div>
 
-      <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 20 }}>
+      <div style={{ fontSize: 13, color: 'var(--text-tertiary)', marginBottom: 20 }}>
         Saved to your database — no server restarts needed.
       </div>
 
@@ -84,19 +84,19 @@ export default function AdminConfig() {
                 <span style={{ fontSize: 18 }}>{emoji}</span>
                 <div>
                   <div style={{ fontWeight: 700, fontSize: 14 }}>{group}</div>
-                  <div style={{ fontSize: 11, color: done === total ? '#4ade80' : 'rgba(255,255,255,0.35)', marginTop: 2 }}>
+                  <div style={{ fontSize: 11, color: done === total ? '#4ade80' : 'var(--text-tertiary)', marginTop: 2 }}>
                     {done}/{total} configured
                   </div>
                 </div>
               </div>
-              {isOpen ? <ChevronDown size={16} color="rgba(255,255,255,0.4)" /> : <ChevronRight size={16} color="rgba(255,255,255,0.4)" />}
+              {isOpen ? <ChevronDown size={16} color="var(--text-tertiary)" /> : <ChevronRight size={16} color="var(--text-tertiary)" />}
             </div>
 
             {isOpen && (
-              <div style={{ padding: '0 16px 16px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+              <div style={{ padding: '0 16px 16px', borderTop: '1px solid var(--border-subtle)' }}>
                 {fields.map(({ key, label }) => (
                   <div key={key} style={{ marginTop: 14 }}>
-                    <label style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 6, display: 'block' }}>{label}</label>
+                    <label style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6, display: 'block' }}>{label}</label>
                     <div style={{ position: 'relative' }}>
                       <input
                         className="input"
@@ -109,7 +109,7 @@ export default function AdminConfig() {
                       <button
                         type="button"
                         onClick={() => setShow(s => ({ ...s, [key]: !s[key] }))}
-                        style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)' }}
+                        style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)' }}
                       >
                         {show[key] ? <EyeOff size={15} /> : <Eye size={15} />}
                       </button>

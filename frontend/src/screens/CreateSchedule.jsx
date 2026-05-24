@@ -119,38 +119,38 @@ export default function CreateSchedule() {
   return (
     <div style={{ padding: '0 16px 16px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '20px 0 8px' }}>
-        <button onClick={() => step > 1 ? setStep(s => s - 1) : navigate('/schedule')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', padding: 0 }}>
+        <button onClick={() => step > 1 ? setStep(s => s - 1) : navigate('/schedule')} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: 0 }}>
           <ArrowLeft size={22} />
         </button>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 16, fontFamily: 'Syne', fontWeight: 800 }}>Create Scheduled Post</div>
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>Step {step} of 5 — {STEPS[step - 1]}</div>
+          <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 2 }}>Step {step} of 5 — {STEPS[step - 1]}</div>
         </div>
       </div>
 
       {/* Step progress */}
       <div style={{ display: 'flex', gap: 4, marginBottom: 20 }}>
-        {STEPS.map((_, i) => <div key={i} style={{ flex: 1, height: 3, borderRadius: 999, background: i < step ? '#7c3aed' : 'rgba(255,255,255,0.1)' }} />)}
+        {STEPS.map((_, i) => <div key={i} style={{ flex: 1, height: 3, borderRadius: 999, background: i < step ? '#f97316' : 'var(--border-strong)' }} />)}
       </div>
 
       {/* STEP 1: Content */}
       {step === 1 && (
         <div>
           {!videoFile ? (
-            <div {...getRootProps()} style={{ border: '2px dashed rgba(255,255,255,0.15)', borderRadius: 20, padding: '40px 24px', textAlign: 'center', cursor: 'pointer', marginBottom: 20 }}>
+            <div {...getRootProps()} style={{ border: '2px dashed var(--border-strong)', borderRadius: 20, padding: '40px 24px', textAlign: 'center', cursor: 'pointer', marginBottom: 20 }}>
               <input {...getInputProps()} />
-              <Upload size={40} color="#7c3aed" style={{ marginBottom: 12 }} />
+              <Upload size={40} color="#f97316" style={{ marginBottom: 12 }} />
               <div style={{ fontSize: 16, fontWeight: 700 }}>Upload Video</div>
-              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 6 }}>MP4, MOV, AVI — tap to select</div>
+              <div style={{ fontSize: 13, color: 'var(--text-tertiary)', marginTop: 6 }}>MP4, MOV, AVI — tap to select</div>
             </div>
           ) : (
             <div className="card" style={{ padding: 14, marginBottom: 20 }}>
               <video src={videoPreview} controls style={{ width: '100%', borderRadius: 10, marginBottom: 10 }} />
-              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)' }}>{videoFile.name} — {(videoFile.size / 1024 / 1024).toFixed(1)}MB</div>
+              <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{videoFile.name} — {(videoFile.size / 1024 / 1024).toFixed(1)}MB</div>
             </div>
           )}
           <div style={{ marginBottom: 14 }}>
-            <label style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginBottom: 6, display: 'block' }}>Post Title *</label>
+            <label style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 6, display: 'block' }}>Post Title *</label>
             <input className="input" placeholder="Enter title..." value={title} onChange={e => setTitle(e.target.value)} />
           </div>
           <button className="btn-primary" onClick={() => setStep(2)} disabled={!title} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
@@ -164,14 +164,14 @@ export default function CreateSchedule() {
         <div>
           <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
             {['urdu', 'english'].map(t => (
-              <button key={t} onClick={() => setCaptionTab(t)} style={{ flex: 1, padding: '10px', borderRadius: 10, border: `1px solid ${captionTab === t ? '#7c3aed' : 'rgba(255,255,255,0.1)'}`, background: captionTab === t ? 'rgba(124,58,237,0.15)' : 'transparent', color: captionTab === t ? '#c4b5fd' : 'rgba(255,255,255,0.5)', cursor: 'pointer', fontWeight: 600, textTransform: 'capitalize' }}>
+              <button key={t} onClick={() => setCaptionTab(t)} style={{ flex: 1, padding: '10px', borderRadius: 10, border: `1px solid ${captionTab === t ? '#f97316' : 'var(--border-strong)'}`, background: captionTab === t ? 'rgba(249,115,22,0.15)' : 'transparent', color: captionTab === t ? '#fdba74' : 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600, textTransform: 'capitalize' }}>
                 {t === 'urdu' ? 'اردو Caption' : 'English Caption'}
               </button>
             ))}
           </div>
           <textarea className="input" rows={8} value={captionTab === 'urdu' ? captionUrdu : captionEnglish} onChange={e => captionTab === 'urdu' ? setCaptionUrdu(e.target.value) : setCaptionEnglish(e.target.value)} placeholder={captionTab === 'urdu' ? 'اردو میں کیپشن لکھیں...' : 'Write English caption...'} style={{ direction: captionTab === 'urdu' ? 'rtl' : 'ltr', marginBottom: 14 }} />
           <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 10 }}>Hashtags</div>
-          <button onClick={loadTrending} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.3)', color: '#a78bfa', borderRadius: 8, padding: '8px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer', marginBottom: 12 }}>
+          <button onClick={loadTrending} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(249,115,22,0.15)', border: '1px solid rgba(249,115,22,0.3)', color: '#fb923c', borderRadius: 8, padding: '8px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer', marginBottom: 12 }}>
             <TrendingUp size={14} /> Fetch Live Trending
           </button>
           {trending.length > 0 && (
@@ -189,7 +189,7 @@ export default function CreateSchedule() {
       {step === 3 && (
         <div>
           {['youtube', 'instagram_reels', 'instagram_feed', 'twitter'].map(p => (
-            <div key={p} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, marginBottom: 8 }}>
+            <div key={p} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', background: 'var(--bg-hover)', border: '1px solid var(--border-subtle)', borderRadius: 12, marginBottom: 8 }}>
               <span style={{ fontWeight: 600, textTransform: 'capitalize' }}>{p.replace('_', ' ')}</span>
               <div className={`toggle ${platforms[p] ? 'active' : ''}`} onClick={() => setPlatforms(prev => ({ ...prev, [p]: !prev[p] }))} />
             </div>
@@ -218,15 +218,15 @@ export default function CreateSchedule() {
           <div className="card" style={{ padding: '16px', marginBottom: 16 }}>
             <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 12 }}>📅 Pick Date & Time</div>
             <div style={{ marginBottom: 12 }}>
-              <label style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginBottom: 6, display: 'block' }}>Date</label>
+              <label style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 6, display: 'block' }}>Date</label>
               <input type="date" className="input" value={scheduledDate} onChange={e => setScheduledDate(e.target.value)} min={new Date().toISOString().split('T')[0]} />
             </div>
             <div style={{ marginBottom: 12 }}>
-              <label style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginBottom: 6, display: 'block' }}>Time (PKT)</label>
+              <label style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 6, display: 'block' }}>Time (PKT)</label>
               <input type="time" className="input" value={scheduledTime} onChange={e => setScheduledTime(e.target.value)} />
             </div>
             {scheduledDate && scheduledTime && (
-              <div style={{ padding: '10px 12px', background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(124,58,237,0.2)', borderRadius: 10, fontSize: 13, color: '#c4b5fd' }}>
+              <div style={{ padding: '10px 12px', background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.2)', borderRadius: 10, fontSize: 13, color: '#fdba74' }}>
                 📍 {new Date(`${scheduledDate}T${scheduledTime}`).toLocaleString('en-PK', { timeZone: 'Asia/Karachi', weekday: 'long', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })} PKT
               </div>
             )}
@@ -235,10 +235,10 @@ export default function CreateSchedule() {
           <div className="card" style={{ padding: '14px 16px', marginBottom: 16 }}>
             <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 10 }}>📈 Best Times to Post in Pakistan</div>
             {BEST_TIMES.map(t => (
-              <div key={t.time} onClick={() => setScheduledTime(t.time.split('–')[0].trim().replace(' AM', '').replace(' PM', '').padStart(5, '0'))} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer' }}>
+              <div key={t.time} onClick={() => setScheduledTime(t.time.split('–')[0].trim().replace(' AM', '').replace(' PM', '').padStart(5, '0'))} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border-subtle)', cursor: 'pointer' }}>
                 <div>
                   <span style={{ fontSize: 13, fontWeight: 600 }}>{t.label}</span>
-                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginLeft: 8 }}>{t.time}</span>
+                  <span style={{ fontSize: 12, color: 'var(--text-tertiary)', marginLeft: 8 }}>{t.time}</span>
                 </div>
                 {t.best && <span style={{ fontSize: 11, color: '#f59e0b', fontWeight: 700 }}>🔥 Best</span>}
               </div>
@@ -255,14 +255,14 @@ export default function CreateSchedule() {
               <>
                 <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
                   {['daily', 'weekly', 'monthly'].map(r => (
-                    <button key={r} onClick={() => setRecurrenceRule(r)} style={{ flex: 1, padding: '8px 4px', borderRadius: 8, border: `1px solid ${recurrenceRule === r ? '#7c3aed' : 'rgba(255,255,255,0.1)'}`, background: recurrenceRule === r ? 'rgba(124,58,237,0.15)' : 'transparent', color: recurrenceRule === r ? '#c4b5fd' : 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: 12, fontWeight: 600, textTransform: 'capitalize' }}>
+                    <button key={r} onClick={() => setRecurrenceRule(r)} style={{ flex: 1, padding: '8px 4px', borderRadius: 8, border: `1px solid ${recurrenceRule === r ? '#f97316' : 'var(--border-strong)'}`, background: recurrenceRule === r ? 'rgba(249,115,22,0.15)' : 'transparent', color: recurrenceRule === r ? '#fdba74' : 'var(--text-tertiary)', cursor: 'pointer', fontSize: 12, fontWeight: 600, textTransform: 'capitalize' }}>
                       {r}
                     </button>
                   ))}
                 </div>
-                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginBottom: 8 }}>Next 5 occurrences:</div>
+                <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginBottom: 8 }}>Next 5 occurrences:</div>
                 {getNextOccurrences().map((d, i) => (
-                  <div key={i} style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', padding: '4px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>📅 {d}</div>
+                  <div key={i} style={{ fontSize: 12, color: 'var(--text-secondary)', padding: '4px 0', borderBottom: '1px solid var(--border-subtle)' }}>📅 {d}</div>
                 ))}
               </>
             )}
@@ -284,9 +284,9 @@ export default function CreateSchedule() {
               ['TikTok Accounts', selectedTikTok.size > 0 ? `${selectedTikTok.size} accounts` : 'None'],
               ['Recurring', recurring ? recurrenceRule : 'No']
             ].map(([label, value]) => (
-              <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.05)', fontSize: 13 }}>
-                <span style={{ color: 'rgba(255,255,255,0.5)' }}>{label}</span>
-                <span style={{ fontWeight: 600, maxWidth: '60%', textAlign: 'right', color: 'rgba(255,255,255,0.8)' }}>{value}</span>
+              <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border-subtle)', fontSize: 13 }}>
+                <span style={{ color: 'var(--text-secondary)' }}>{label}</span>
+                <span style={{ fontWeight: 600, maxWidth: '60%', textAlign: 'right', color: 'var(--text-primary)' }}>{value}</span>
               </div>
             ))}
           </div>

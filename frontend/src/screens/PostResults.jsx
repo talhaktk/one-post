@@ -36,7 +36,7 @@ export default function PostResults() {
   }
 
   if (loading) return <div style={{ padding: 24 }}><LoadingSkeleton count={4} /></div>
-  if (!results) return <div style={{ padding: 24, textAlign: 'center', color: 'rgba(255,255,255,0.4)' }}>No results found</div>
+  if (!results) return <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-tertiary)' }}>No results found</div>
 
   const total = results.results?.length || 0
   const published = results.results?.filter(r => r.status === 'published').length || 0
@@ -45,7 +45,7 @@ export default function PostResults() {
   return (
     <div style={{ padding: '0 16px 16px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '20px 0 16px' }}>
-        <button onClick={() => navigate('/schedule/list')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', padding: 0 }}>
+        <button onClick={() => navigate('/schedule/list')} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: 0 }}>
           <ArrowLeft size={22} />
         </button>
         <div style={{ fontSize: 18, fontFamily: 'Syne', fontWeight: 800 }}>Post Results</div>
@@ -54,13 +54,13 @@ export default function PostResults() {
       {/* Summary stats */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
         {[
-          { label: 'Total', value: total, color: '#7c3aed' },
+          { label: 'Total', value: total, color: '#f97316' },
           { label: 'Posted', value: published, color: '#22c55e' },
           { label: 'Failed', value: failed, color: '#ef4444' }
         ].map(s => (
           <div key={s.label} className="card" style={{ flex: 1, padding: '16px 12px', textAlign: 'center' }}>
             <div style={{ fontSize: 28, fontWeight: 800, color: s.color }}>{s.value}</div>
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>{s.label}</div>
+            <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 4 }}>{s.label}</div>
           </div>
         ))}
       </div>
@@ -72,7 +72,7 @@ export default function PostResults() {
             <RotateCcw size={14} /> Retry Failed ({failed})
           </button>
         )}
-        <button onClick={copyAllLinks} style={{ flex: 1, padding: '10px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)', borderRadius: 10, cursor: 'pointer', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+        <button onClick={copyAllLinks} style={{ flex: 1, padding: '10px', background: 'var(--bg-elevated)', border: '1px solid var(--border-strong)', color: 'var(--text-secondary)', borderRadius: 10, cursor: 'pointer', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
           <Copy size={14} /> Copy All Links
         </button>
       </div>
@@ -80,7 +80,7 @@ export default function PostResults() {
       {/* Per target results */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {results.results?.map((r, i) => (
-          <div key={i} className="card" style={{ padding: '12px 14px', border: `1px solid ${r.status === 'published' ? 'rgba(34,197,94,0.15)' : r.status === 'failed' ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.06)'}` }}>
+          <div key={i} className="card" style={{ padding: '12px 14px', border: `1px solid ${r.status === 'published' ? 'rgba(34,197,94,0.15)' : r.status === 'failed' ? 'rgba(239,68,68,0.15)' : 'var(--bg-elevated)'}` }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{ fontSize: 18 }}>{PLATFORM_ICONS[r.platform] || '🔗'}</span>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -90,11 +90,11 @@ export default function PostResults() {
                 )}
               </div>
               <div style={{ display: 'flex', align: 'center', gap: 8 }}>
-                <span style={{ fontSize: 11, color: r.status === 'published' ? '#22c55e' : r.status === 'failed' ? '#ef4444' : 'rgba(255,255,255,0.4)', fontWeight: 600 }}>
+                <span style={{ fontSize: 11, color: r.status === 'published' ? '#22c55e' : r.status === 'failed' ? '#ef4444' : 'var(--text-tertiary)', fontWeight: 600 }}>
                   {r.status === 'published' ? '✅' : r.status === 'failed' ? '❌' : '⏳'} {r.status}
                 </span>
                 {r.platform_post_url && (
-                  <a href={r.platform_post_url} target="_blank" rel="noopener noreferrer" style={{ color: '#7c3aed' }}>
+                  <a href={r.platform_post_url} target="_blank" rel="noopener noreferrer" style={{ color: '#f97316' }}>
                     <ExternalLink size={14} />
                   </a>
                 )}

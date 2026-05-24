@@ -1,15 +1,5 @@
 import { CheckCircle, XCircle, Loader, Clock, ExternalLink } from 'lucide-react'
-
-const PLATFORM_COLORS = {
-  youtube: '#FF0000', instagram: '#E1306C', instagram_reels: '#E1306C',
-  instagram_feed: '#833AB4', instagram_image: '#E1306C',
-  facebook: '#1877F2', tiktok: '#69C9D0', twitter: '#ffffff'
-}
-
-const PLATFORM_LETTERS = {
-  youtube: 'YT', instagram: 'IG', instagram_reels: 'IG', instagram_feed: 'IG',
-  instagram_image: 'IG', facebook: 'f', tiktok: 'TT', twitter: '𝕏'
-}
+import PlatformIcon, { PLATFORM_BRAND_COLOR } from './PlatformIcon'
 
 const StatusIcon = ({ status }) => {
   if (status === 'published') return <CheckCircle size={16} style={{ color: 'var(--success)' }} />
@@ -40,8 +30,7 @@ const STATUS_COLOR = {
 
 export default function ProgressCard({ target }) {
   const { platform, target_name, status, progress = 0, error_message, countdown, post_url } = target
-  const color = PLATFORM_COLORS[platform] || '#7c3aed'
-  const letter = PLATFORM_LETTERS[platform] || '·'
+  const color = PLATFORM_BRAND_COLOR[platform] || '#f97316'
   const isActive = status === 'uploading' || status === 'processing'
 
   return (
@@ -55,10 +44,12 @@ export default function ProgressCard({ target }) {
         <div className="row" style={{ gap: 10, marginBottom: (isActive || status === 'waiting') ? 10 : 0 }}>
           <div style={{
             width: 34, height: 34, borderRadius: 9,
-            background: `${color}22`, color,
+            background: `${color}1f`, color,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 13, fontWeight: 700, flexShrink: 0
-          }}>{letter}</div>
+            flexShrink: 0
+          }}>
+            <PlatformIcon platform={platform} size={16} />
+          </div>
 
           <div className="grow" style={{ flex: 1, minWidth: 0 }}>
             <div className="t-h3 truncate-1">{target_name || platform}</div>

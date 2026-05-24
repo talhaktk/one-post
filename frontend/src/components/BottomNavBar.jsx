@@ -37,7 +37,7 @@ export default function BottomNavBar() {
     <nav style={{
       position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
       width: '100%', maxWidth: 480,
-      background: 'rgba(10,11,18,0.88)',
+      background: 'var(--nav-bg)',
       WebkitBackdropFilter: 'blur(20px) saturate(140%)',
       backdropFilter: 'blur(20px) saturate(140%)',
       borderTop: '1px solid var(--border-subtle)',

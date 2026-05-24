@@ -50,7 +50,7 @@ export default function NewsSettings() {
   return (
     <div style={{ padding: '0 16px 16px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '20px 0 16px' }}>
-        <button onClick={() => navigate('/alerts')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', padding: 0 }}>
+        <button onClick={() => navigate('/alerts')} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: 0 }}>
           <ArrowLeft size={22} />
         </button>
         <div style={{ fontSize: 18, fontFamily: 'Syne', fontWeight: 800 }}>News Monitor Settings</div>
@@ -65,7 +65,7 @@ export default function NewsSettings() {
               <div key={src.id} className="card" style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
                   <div style={{ fontWeight: 600, fontSize: 14 }}>{src.name}</div>
-                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>{src.language} · checks every {src.check_interval_minutes}m</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>{src.language} · checks every {src.check_interval_minutes}m</div>
                 </div>
                 <div className={`toggle ${src.is_active ? 'active' : ''}`} onClick={() => toggleSource(src.id, src.is_active)} />
               </div>
@@ -77,17 +77,17 @@ export default function NewsSettings() {
 
           {/* Add keyword */}
           <div className="card" style={{ padding: '14px 16px', marginBottom: 16 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10, color: '#a78bfa' }}>Add New Keyword</div>
+            <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10, color: '#fb923c' }}>Add New Keyword</div>
             <input className="input" placeholder="Keyword..." value={newKeyword} onChange={e => setNewKeyword(e.target.value)} style={{ marginBottom: 10 }} />
             <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
               <div style={{ flex: 1 }}>
-                <label style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginBottom: 4, display: 'block' }}>Score</label>
+                <label style={{ fontSize: 12, color: 'var(--text-tertiary)', marginBottom: 4, display: 'block' }}>Score</label>
                 <select className="input" value={newScore} onChange={e => setNewScore(Number(e.target.value))}>
                   {[1, 3, 5, 8, 10].map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
               <div style={{ flex: 1 }}>
-                <label style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginBottom: 4, display: 'block' }}>Language</label>
+                <label style={{ fontSize: 12, color: 'var(--text-tertiary)', marginBottom: 4, display: 'block' }}>Language</label>
                 <select className="input" value={newLang} onChange={e => setNewLang(e.target.value)}>
                   <option value="english">English</option>
                   <option value="urdu">Urdu</option>
@@ -102,13 +102,13 @@ export default function NewsSettings() {
           {/* Keyword list */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {keywords.map(k => (
-              <div key={k.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 10, border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div key={k.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'var(--bg-hover)', borderRadius: 10, border: '1px solid var(--border-subtle)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <span style={{ fontSize: 14, fontWeight: 600 }}>{k.keyword}</span>
-                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', padding: '2px 8px', background: 'rgba(255,255,255,0.06)', borderRadius: 999 }}>score {k.score}</span>
-                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>{k.language}</span>
+                  <span style={{ fontSize: 11, color: 'var(--text-tertiary)', padding: '2px 8px', background: 'var(--bg-elevated)', borderRadius: 999 }}>score {k.score}</span>
+                  <span style={{ fontSize: 11, color: 'var(--text-disabled)' }}>{k.language}</span>
                 </div>
-                <button onClick={() => handleDeleteKeyword(k.id)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', padding: 4 }}>
+                <button onClick={() => handleDeleteKeyword(k.id)} style={{ background: 'none', border: 'none', color: 'var(--text-disabled)', cursor: 'pointer', padding: 4 }}>
                   <Trash2 size={15} />
                 </button>
               </div>
@@ -124,9 +124,9 @@ export default function NewsSettings() {
               ['🟡 IMPORTANT', 'Score 5+'],
               ['🟢 NORMAL', 'Score 1+']
             ].map(([label, range]) => (
-              <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+              <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13, borderBottom: '1px solid var(--border-subtle)' }}>
                 <span>{label}</span>
-                <span style={{ color: 'rgba(255,255,255,0.4)' }}>{range}</span>
+                <span style={{ color: 'var(--text-tertiary)' }}>{range}</span>
               </div>
             ))}
           </div>

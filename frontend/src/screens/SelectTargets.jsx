@@ -6,17 +6,8 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import FacebookPageItem from '../components/FacebookPageItem'
 import TikTokAccountItem from '../components/TikTokAccountItem'
+import PlatformIcon, { PLATFORM_BRAND_COLOR } from '../components/PlatformIcon'
 import toast from 'react-hot-toast'
-
-const PLATFORM_COLORS = {
-  youtube: '#FF0000', instagram_reels: '#E1306C', instagram_feed: '#833AB4',
-  instagram_image: '#E1306C', facebook: '#1877F2', tiktok: '#69C9D0', twitter: '#ffffff'
-}
-
-const PLATFORM_LETTERS = {
-  youtube: 'YT', instagram_reels: 'IG', instagram_feed: 'IG',
-  instagram_image: 'IG', facebook: 'f', tiktok: 'TT', twitter: '𝕏'
-}
 
 const VIDEO_PLATFORMS = [
   { key: 'youtube',         label: 'YouTube' },
@@ -112,12 +103,13 @@ export default function SelectTargets() {
 
   const PlatformDot = ({ pkey, size = 36 }) => (
     <span style={{
-      width: size, height: size, borderRadius: 9,
-      background: `${PLATFORM_COLORS[pkey] || 'var(--accent)'}22`,
-      color: PLATFORM_COLORS[pkey] || 'var(--accent)',
-      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: 13, fontWeight: 700, flexShrink: 0
-    }}>{PLATFORM_LETTERS[pkey] || '·'}</span>
+      width: size, height: size, borderRadius: 10,
+      background: `${PLATFORM_BRAND_COLOR[pkey] || 'var(--accent)'}1f`,
+      color: PLATFORM_BRAND_COLOR[pkey] || 'var(--accent)',
+      display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
+    }}>
+      <PlatformIcon platform={pkey} size={Math.round(size * 0.5)} />
+    </span>
   )
 
   return (

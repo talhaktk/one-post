@@ -57,7 +57,7 @@ export default function App() {
     return (
       <div className="app-container flex items-center justify-center" style={{ minHeight: '100vh' }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 36, fontFamily: 'Syne', fontWeight: 800, color: '#7c3aed', marginBottom: 12 }}>OnePost</div>
+          <div style={{ fontSize: 36, fontFamily: 'Syne', fontWeight: 800, color: '#f97316', marginBottom: 12 }}>OnePost</div>
           <div className="spinner mx-auto" />
         </div>
       </div>

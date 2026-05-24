@@ -277,7 +277,7 @@ export default function AutoEdit() {
             >
               <div className="row" style={{ alignItems: 'flex-start', gap: 12 }}>
                 <div className="avatar-icon" style={{
-                  background: enabled ? 'rgba(124,58,237,0.22)' : 'var(--bg-hover)',
+                  background: enabled ? 'rgba(249,115,22,0.22)' : 'var(--bg-hover)',
                   color: enabled ? 'var(--accent)' : 'var(--text-secondary)'
                 }}>
                   <Icon size={18} />
@@ -304,7 +304,7 @@ export default function AutoEdit() {
                               minHeight: 36, padding: '0 8px',
                               borderRadius: 8,
                               border: `1px solid ${lActive ? 'var(--accent)' : 'var(--border-strong)'}`,
-                              background: lActive ? 'rgba(124,58,237,0.22)' : 'var(--bg-elevated)',
+                              background: lActive ? 'rgba(249,115,22,0.22)' : 'var(--bg-elevated)',
                               color: lActive ? 'var(--accent)' : 'var(--text-secondary)',
                               fontSize: 12, fontWeight: 600, cursor: 'pointer', textTransform: 'capitalize'
                             }}

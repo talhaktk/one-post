@@ -114,7 +114,7 @@ export default function HashtagManager() {
     <div style={{ padding: '0 16px 16px' }}>
       <div style={{ padding: '20px 0 12px' }}>
         <div style={{ fontSize: 22, fontFamily: 'Syne', fontWeight: 800 }}>Hashtag Manager</div>
-        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>Step 3 of 4</div>
+        <div style={{ fontSize: 13, color: 'var(--text-tertiary)', marginTop: 2 }}>Step 3 of 4</div>
       </div>
 
       {/* Trending Section */}
@@ -123,12 +123,12 @@ export default function HashtagManager() {
           <div>
             <div style={{ fontWeight: 700, fontSize: 15 }}>🔥 Trending Now in Pakistan</div>
             {fetchedAt && !loadingTrends && (
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>
+              <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>
                 📍 Live trends — fetched at {formatTime(fetchedAt)}
               </div>
             )}
           </div>
-          <button onClick={loadTrends} disabled={loadingTrends} style={{ background: 'none', border: 'none', color: '#7c3aed', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 600, padding: 0 }}>
+          <button onClick={loadTrends} disabled={loadingTrends} style={{ background: 'none', border: 'none', color: '#f97316', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 600, padding: 0 }}>
             {loadingTrends ? <Loader size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <RefreshCw size={14} />}
             {loadingTrends ? 'Fetching...' : 'Refresh'}
           </button>
@@ -137,14 +137,14 @@ export default function HashtagManager() {
         {/* Source tabs */}
         <div style={{ display: 'flex', gap: 6, marginBottom: 12, overflowX: 'auto', paddingBottom: 4 }}>
           {TREND_TABS.map(t => (
-            <button key={t} onClick={() => setTrendTab(t)} style={{ padding: '5px 12px', borderRadius: 999, border: 'none', background: trendTab === t ? '#7c3aed' : 'rgba(255,255,255,0.08)', color: trendTab === t ? 'white' : 'rgba(255,255,255,0.5)', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s', textTransform: 'capitalize' }}>
+            <button key={t} onClick={() => setTrendTab(t)} style={{ padding: '5px 12px', borderRadius: 999, border: 'none', background: trendTab === t ? '#f97316' : 'var(--border-subtle)', color: trendTab === t ? 'white' : 'var(--text-secondary)', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s', textTransform: 'capitalize' }}>
               {t === 'twitter' ? '✖ X' : t === 'google' ? '🔍 Google' : `📱 ${t.charAt(0).toUpperCase() + t.slice(1)}`}
             </button>
           ))}
         </div>
 
         {loadingTrends ? (
-          <div style={{ textAlign: 'center', padding: '24px 0', color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>
+          <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--text-tertiary)', fontSize: 13 }}>
             <Loader size={20} style={{ animation: 'spin 1s linear infinite', marginBottom: 8, display: 'block', margin: '0 auto 8px' }} />
             🔄 Fetching latest trends from X, TikTok, Google, Instagram, YouTube...
           </div>
@@ -159,7 +159,7 @@ export default function HashtagManager() {
             {currentTrends.slice(0, 20).map(t => (
               <HashtagChip key={t.tag || t} tag={t.tag || t} volume={t.volume} trending onAdd={(tag) => addTag(tag)} />
             ))}
-            {currentTrends.length === 0 && <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)', padding: '8px 0' }}>No trends available for this source</div>}
+            {currentTrends.length === 0 && <div style={{ fontSize: 13, color: 'var(--text-disabled)', padding: '8px 0' }}>No trends available for this source</div>}
           </div>
         )}
       </div>
@@ -168,7 +168,7 @@ export default function HashtagManager() {
       <div className="card" style={{ padding: '16px', marginBottom: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
           <div style={{ fontWeight: 700, fontSize: 15 }}>✨ AI Hashtag Suggestions</div>
-          <button onClick={getAISuggestions} disabled={loadingAI} style={{ background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.3)', color: '#a78bfa', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <button onClick={getAISuggestions} disabled={loadingAI} style={{ background: 'rgba(249,115,22,0.15)', border: '1px solid rgba(249,115,22,0.3)', color: '#fb923c', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
             {loadingAI ? <Loader size={12} style={{ animation: 'spin 1s linear infinite' }} /> : <Sparkles size={12} />}
             {loadingAI ? 'Generating...' : 'Generate'}
           </button>
@@ -178,7 +178,7 @@ export default function HashtagManager() {
             {aiTags.map(tag => <HashtagChip key={tag} tag={tag} onAdd={(t) => addTag(t)} />)}
           </div>
         ) : (
-          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)' }}>Tap Generate to get AI-powered hashtag suggestions based on your video content.</div>
+          <div style={{ fontSize: 13, color: 'var(--text-disabled)' }}>Tap Generate to get AI-powered hashtag suggestions based on your video content.</div>
         )}
       </div>
 
@@ -186,7 +186,7 @@ export default function HashtagManager() {
       <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 12 }}>Per Platform Hashtags</div>
       <div style={{ display: 'flex', gap: 6, marginBottom: 16, overflowX: 'auto', paddingBottom: 4 }}>
         {PLATFORMS.map(p => (
-          <button key={p} onClick={() => setPlatform(p)} style={{ padding: '6px 14px', borderRadius: 999, border: 'none', background: platform === p ? '#7c3aed' : 'rgba(255,255,255,0.08)', color: platform === p ? 'white' : 'rgba(255,255,255,0.5)', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s', textTransform: 'capitalize' }}>
+          <button key={p} onClick={() => setPlatform(p)} style={{ padding: '6px 14px', borderRadius: 999, border: 'none', background: platform === p ? '#f97316' : 'var(--border-subtle)', color: platform === p ? 'white' : 'var(--text-secondary)', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s', textTransform: 'capitalize' }}>
             {p} ({(postState.hashtags[p] || []).length}/{PLATFORM_LIMITS[p]})
           </button>
         ))}
@@ -194,16 +194,16 @@ export default function HashtagManager() {
 
       <div className="card" style={{ padding: '16px', marginBottom: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, textTransform: 'capitalize' }}>{platform} <span style={{ color: 'rgba(255,255,255,0.4)', fontWeight: 400 }}>(max {limit})</span></div>
+          <div style={{ fontSize: 14, fontWeight: 700, textTransform: 'capitalize' }}>{platform} <span style={{ color: 'var(--text-tertiary)', fontWeight: 400 }}>(max {limit})</span></div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={() => copyFromTo('twitter', platform)} style={{ background: 'none', border: 'none', color: '#7c3aed', fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}><Copy size={12} /> Copy from X</button>
-            <button onClick={saveCurrentSet} style={{ background: 'none', border: 'none', color: '#7c3aed', fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}><Save size={12} /> Save Set</button>
+            <button onClick={() => copyFromTo('twitter', platform)} style={{ background: 'none', border: 'none', color: '#f97316', fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}><Copy size={12} /> Copy from X</button>
+            <button onClick={saveCurrentSet} style={{ background: 'none', border: 'none', color: '#f97316', fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}><Save size={12} /> Save Set</button>
           </div>
         </div>
 
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
           {currentHashtags.map(tag => <HashtagChip key={tag} tag={tag} onRemove={(t) => removeTag(t)} />)}
-          {currentHashtags.length === 0 && <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)' }}>No hashtags added yet. Tap from trending or AI suggestions above.</div>}
+          {currentHashtags.length === 0 && <div style={{ fontSize: 13, color: 'var(--text-disabled)' }}>No hashtags added yet. Tap from trending or AI suggestions above.</div>}
         </div>
 
         {/* Quick add */}
@@ -216,9 +216,9 @@ export default function HashtagManager() {
       <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 10 }}>📦 Preset Sets</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
         {PRESET_SETS.map(set => (
-          <button key={set.name} onClick={() => applyPreset(set)} style={{ width: '100%', padding: '12px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, color: 'white', textAlign: 'left', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <button key={set.name} onClick={() => applyPreset(set)} style={{ width: '100%', padding: '12px 14px', background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)', borderRadius: 12, color: 'var(--text-primary)', textAlign: 'left', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: 13, fontWeight: 600 }}>{set.name}</span>
-            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>{set.hashtags.length} tags → Apply</span>
+            <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>{set.hashtags.length} tags → Apply</span>
           </button>
         ))}
       </div>
@@ -228,9 +228,9 @@ export default function HashtagManager() {
           <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 10 }}>💾 My Saved Sets</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
             {savedSets.map(set => (
-              <button key={set.id} onClick={() => applyPreset(set)} style={{ width: '100%', padding: '12px 14px', background: 'rgba(124,58,237,0.08)', border: '1px solid rgba(124,58,237,0.2)', borderRadius: 12, color: 'white', textAlign: 'left', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <button key={set.id} onClick={() => applyPreset(set)} style={{ width: '100%', padding: '12px 14px', background: 'rgba(249,115,22,0.08)', border: '1px solid rgba(249,115,22,0.2)', borderRadius: 12, color: 'var(--text-primary)', textAlign: 'left', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: 13, fontWeight: 600 }}>{set.set_name}</span>
-                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>{set.hashtags?.length} tags · {set.platform} → Apply</span>
+                <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>{set.hashtags?.length} tags · {set.platform} → Apply</span>
               </button>
             ))}
           </div>

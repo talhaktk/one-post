@@ -93,19 +93,19 @@ export default function ConnectAccounts() {
   return (
     <div style={{ padding: '0 16px 16px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '20px 0 16px' }}>
-        <button onClick={() => navigate('/settings')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'white', padding: 4 }}>
+        <button onClick={() => navigate('/settings')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-primary)', padding: 4 }}>
           <ArrowLeft size={20} />
         </button>
         <div>
           <div style={{ fontSize: 22, fontFamily: 'Syne', fontWeight: 800 }}>Connected Accounts</div>
-          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>Manage your platform connections</div>
+          <div style={{ fontSize: 13, color: 'var(--text-tertiary)', marginTop: 2 }}>Manage your platform connections</div>
         </div>
       </div>
 
       {/* Tab bar */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20, background: 'rgba(255,255,255,0.04)', padding: 4, borderRadius: 12 }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20, background: 'var(--bg-elevated)', padding: 4, borderRadius: 12 }}>
         {['platforms', 'facebook', 'tiktok'].map(t => (
-          <button key={t} onClick={() => setTab(t)} style={{ flex: 1, padding: '8px 4px', borderRadius: 8, border: 'none', background: tab === t ? '#7c3aed' : 'transparent', color: tab === t ? 'white' : 'rgba(255,255,255,0.4)', fontSize: 13, fontWeight: 600, cursor: 'pointer', textTransform: 'capitalize', transition: 'all 0.2s' }}>
+          <button key={t} onClick={() => setTab(t)} style={{ flex: 1, padding: '8px 4px', borderRadius: 8, border: 'none', background: tab === t ? '#f97316' : 'transparent', color: tab === t ? 'white' : 'var(--text-tertiary)', fontSize: 13, fontWeight: 600, cursor: 'pointer', textTransform: 'capitalize', transition: 'all 0.2s' }}>
             {t === 'facebook' ? 'FB Pages' : t === 'tiktok' ? 'TikTok' : 'Platforms'}
           </button>
         ))}
@@ -120,32 +120,32 @@ export default function ConnectAccounts() {
           {tab === 'facebook' && (
             <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)' }}>
+                <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
                   {selectedPages.size} of {fbPages.length} pages selected
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <button onClick={handleSyncPages} disabled={connectLoading.fb_sync} style={{ background: 'rgba(24,119,242,0.15)', border: '1px solid rgba(24,119,242,0.3)', color: '#60a5fa', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
                     {connectLoading.fb_sync ? '⏳ Syncing...' : '🔄 Sync Pages'}
                   </button>
-                  <button onClick={selectAllPages} style={{ background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.3)', color: '#a78bfa', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <button onClick={selectAllPages} style={{ background: 'rgba(249,115,22,0.15)', border: '1px solid rgba(249,115,22,0.3)', color: '#fb923c', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
                     <CheckSquare size={14} /> All
                   </button>
                 </div>
               </div>
 
               <div style={{ position: 'relative', marginBottom: 12 }}>
-                <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }} />
+                <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-disabled)' }} />
                 <input className="input" style={{ paddingLeft: 36, paddingTop: 10, paddingBottom: 10, fontSize: 14 }} placeholder="Search pages..." value={fbSearch} onChange={e => setFbSearch(e.target.value)} />
               </div>
 
               {!platforms.facebook ? (
                 <div className="card" style={{ padding: 24, textAlign: 'center' }}>
                   <div style={{ fontSize: 32, marginBottom: 10 }}>🔵</div>
-                  <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', marginBottom: 16 }}>Connect Facebook first to import your pages</div>
+                  <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 16 }}>Connect Facebook first to import your pages</div>
                   <button className="btn-primary" onClick={() => connectPlatform('facebook')}>Connect Facebook</button>
                 </div>
               ) : filteredPages.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '40px 0', color: 'rgba(255,255,255,0.4)' }}>
+                <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-tertiary)' }}>
                   {fbSearch ? 'No pages match your search' : 'No pages found. Tap Sync Pages to import.'}
                 </div>
               ) : filteredPages.map(page => (
@@ -157,7 +157,7 @@ export default function ConnectAccounts() {
           {tab === 'tiktok' && (
             <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)' }}>{tikTokAccounts.length} accounts connected</div>
+                <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{tikTokAccounts.length} accounts connected</div>
                 <button onClick={() => connectPlatform('tiktok_new')} style={{ background: 'rgba(105,201,208,0.15)', border: '1px solid rgba(105,201,208,0.3)', color: '#69C9D0', borderRadius: 10, padding: '8px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
                   <Plus size={16} /> Add TikTok Account
                 </button>
@@ -166,7 +166,7 @@ export default function ConnectAccounts() {
               {tikTokAccounts.length === 0 ? (
                 <div className="card" style={{ padding: 32, textAlign: 'center' }}>
                   <div style={{ fontSize: 36, marginBottom: 10 }}>🎵</div>
-                  <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', marginBottom: 16 }}>No TikTok accounts connected yet</div>
+                  <div style={{ fontSize: 14, color: 'var(--text-tertiary)', marginBottom: 16 }}>No TikTok accounts connected yet</div>
                   <button className="btn-primary" onClick={() => connectPlatform('tiktok_new')}>Add First Account</button>
                 </div>
               ) : tikTokAccounts.map(acc => (

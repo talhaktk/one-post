@@ -49,19 +49,19 @@ export default function ScheduleList() {
     <div style={{ padding: '0 16px 16px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 0 16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <button onClick={() => navigate('/schedule')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', padding: 0 }}>
+          <button onClick={() => navigate('/schedule')} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: 0 }}>
             <ArrowLeft size={22} />
           </button>
           <div style={{ fontSize: 18, fontFamily: 'Syne', fontWeight: 800 }}>Scheduled Posts</div>
         </div>
-        <button onClick={() => navigate('/schedule/create')} style={{ background: '#7c3aed', border: 'none', color: 'white', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 600 }}>
+        <button onClick={() => navigate('/schedule/create')} style={{ background: '#f97316', border: 'none', color: 'white', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 600 }}>
           <Plus size={15} /> New
         </button>
       </div>
 
       <div style={{ display: 'flex', gap: 6, marginBottom: 16, overflowX: 'auto', paddingBottom: 4 }}>
         {FILTERS.map(f => (
-          <button key={f} onClick={() => setFilter(f)} style={{ padding: '6px 14px', borderRadius: 999, border: 'none', background: filter === f ? '#7c3aed' : 'rgba(255,255,255,0.08)', color: filter === f ? 'white' : 'rgba(255,255,255,0.5)', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', textTransform: 'capitalize' }}>
+          <button key={f} onClick={() => setFilter(f)} style={{ padding: '6px 14px', borderRadius: 999, border: 'none', background: filter === f ? '#f97316' : 'var(--border-subtle)', color: filter === f ? 'white' : 'var(--text-secondary)', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', textTransform: 'capitalize' }}>
             {f}
           </button>
         ))}
@@ -70,7 +70,7 @@ export default function ScheduleList() {
       {loading ? <LoadingSkeleton count={4} /> : posts.length === 0 ? (
         <div className="card" style={{ padding: '40px', textAlign: 'center' }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>📅</div>
-          <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', marginBottom: 16 }}>No scheduled posts</div>
+          <div style={{ fontSize: 14, color: 'var(--text-tertiary)', marginBottom: 16 }}>No scheduled posts</div>
           <button className="btn-primary" onClick={() => navigate('/schedule/create')}>Create Scheduled Post</button>
         </div>
       ) : (
@@ -85,11 +85,11 @@ export default function ScheduleList() {
                   {post.thumbnail_url ? (
                     <img src={post.thumbnail_url} alt="" style={{ width: 56, height: 40, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
                   ) : (
-                    <div style={{ width: 56, height: 40, borderRadius: 8, background: 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>🎬</div>
+                    <div style={{ width: 56, height: 40, borderRadius: 8, background: 'var(--bg-elevated)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>🎬</div>
                   )}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 700, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 4 }}>{post.title || 'Scheduled Post'}</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-secondary)' }}>
                       <Clock size={12} />
                       {scheduledDate.toLocaleDateString()} · {scheduledDate.toLocaleTimeString('en-PK', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Karachi' })} PKT
                     </div>
@@ -99,16 +99,16 @@ export default function ScheduleList() {
 
                 <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
                   {platforms.map(p => <span key={p} style={{ fontSize: 16 }}>{PLATFORM_ICONS[p]}</span>)}
-                  {post.target_facebook_pages?.length > 0 && <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>+{post.target_facebook_pages.length} FB pages</span>}
-                  {post.target_tiktok_accounts?.length > 0 && <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>+{post.target_tiktok_accounts.length} TikTok</span>}
+                  {post.target_facebook_pages?.length > 0 && <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>+{post.target_facebook_pages.length} FB pages</span>}
+                  {post.target_tiktok_accounts?.length > 0 && <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>+{post.target_tiktok_accounts.length} TikTok</span>}
                 </div>
 
                 {post.status === 'scheduled' && (
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <button onClick={() => navigate(`/schedule/${post.id}/results`)} style={{ flex: 1, padding: '8px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)', borderRadius: 8, cursor: 'pointer', fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+                    <button onClick={() => navigate(`/schedule/${post.id}/results`)} style={{ flex: 1, padding: '8px', background: 'var(--bg-elevated)', border: '1px solid var(--border-strong)', color: 'var(--text-secondary)', borderRadius: 8, cursor: 'pointer', fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
                       <Edit2 size={12} /> Edit
                     </button>
-                    <button onClick={() => handlePublishNow(post.id)} style={{ flex: 1, padding: '8px', background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.3)', color: '#c4b5fd', borderRadius: 8, cursor: 'pointer', fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+                    <button onClick={() => handlePublishNow(post.id)} style={{ flex: 1, padding: '8px', background: 'rgba(249,115,22,0.15)', border: '1px solid rgba(249,115,22,0.3)', color: '#fdba74', borderRadius: 8, cursor: 'pointer', fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
                       <Zap size={12} /> Post Now
                     </button>
                     <button onClick={() => handleCancel(post.id)} style={{ padding: '8px 12px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#f87171', borderRadius: 8, cursor: 'pointer', fontSize: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -118,7 +118,7 @@ export default function ScheduleList() {
                 )}
 
                 {(post.status === 'published' || post.status === 'failed') && (
-                  <button onClick={() => navigate(`/schedule/${post.id}/results`)} style={{ width: '100%', padding: '8px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
+                  <button onClick={() => navigate(`/schedule/${post.id}/results`)} style={{ width: '100%', padding: '8px', background: 'var(--bg-elevated)', border: '1px solid var(--border-strong)', color: 'var(--text-secondary)', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
                     View Results →
                   </button>
                 )}

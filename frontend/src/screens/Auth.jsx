@@ -49,8 +49,8 @@ export default function Auth() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', padding: '40px 24px 32px' }}>
       <div style={{ textAlign: 'center', marginBottom: 40 }}>
-        <div style={{ fontSize: 36, fontFamily: 'Syne', fontWeight: 800, background: 'linear-gradient(135deg, #7c3aed, #c4b5fd)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>OnePost</div>
-        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>
+        <div style={{ fontSize: 36, fontFamily: 'Syne', fontWeight: 800, background: 'linear-gradient(135deg, #f97316, #fdba74)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>OnePost</div>
+        <div style={{ fontSize: 13, color: 'var(--text-tertiary)', marginTop: 4 }}>
           {mode === 'login' ? 'Welcome back' : mode === 'signup' ? 'Create your account' : 'Reset your password'}
         </div>
       </div>
@@ -58,21 +58,21 @@ export default function Auth() {
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14, flex: 1 }}>
         {mode === 'signup' && (
           <div style={{ position: 'relative' }}>
-            <User size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }} />
+            <User size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-disabled)' }} />
             <input className="input" style={{ paddingLeft: 40 }} type="text" placeholder="Full name" value={name} onChange={e => setName(e.target.value)} required />
           </div>
         )}
 
         <div style={{ position: 'relative' }}>
-          <Mail size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }} />
+          <Mail size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-disabled)' }} />
           <input className="input" style={{ paddingLeft: 40 }} type="email" placeholder="Email address" value={email} onChange={e => setEmail(e.target.value)} required />
         </div>
 
         {mode !== 'reset' && (
           <div style={{ position: 'relative' }}>
-            <Lock size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }} />
+            <Lock size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-disabled)' }} />
             <input className="input" style={{ paddingLeft: 40, paddingRight: 44 }} type={showPw ? 'text' : 'password'} placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} />
-            <button type="button" onClick={() => setShowPw(s => !s)} style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.3)' }}>
+            <button type="button" onClick={() => setShowPw(s => !s)} style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-disabled)' }}>
               {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
@@ -81,12 +81,12 @@ export default function Auth() {
         {mode === 'login' && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }} onClick={() => setRememberMe(r => !r)}>
-              <div style={{ width: 36, height: 20, borderRadius: 10, background: rememberMe ? '#7c3aed' : 'rgba(255,255,255,0.15)', transition: 'background 0.2s', position: 'relative', flexShrink: 0 }}>
+              <div style={{ width: 36, height: 20, borderRadius: 10, background: rememberMe ? '#f97316' : 'var(--border-strong)', transition: 'background 0.2s', position: 'relative', flexShrink: 0 }}>
                 <div style={{ position: 'absolute', top: 2, left: rememberMe ? 18 : 2, width: 16, height: 16, borderRadius: '50%', background: 'white', transition: 'left 0.2s' }} />
               </div>
-              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>Stay signed in</span>
+              <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Stay signed in</span>
             </div>
-            <button type="button" onClick={() => setMode('reset')} style={{ background: 'none', border: 'none', color: '#7c3aed', fontSize: 13, cursor: 'pointer', padding: 0 }}>
+            <button type="button" onClick={() => setMode('reset')} style={{ background: 'none', border: 'none', color: '#f97316', fontSize: 13, cursor: 'pointer', padding: 0 }}>
               Forgot password?
             </button>
           </div>
@@ -99,9 +99,9 @@ export default function Auth() {
         {mode !== 'reset' && (
           <>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.1)' }} />
-              <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)' }}>OR</span>
-              <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.1)' }} />
+              <div style={{ flex: 1, height: 1, background: 'var(--border-strong)' }} />
+              <span style={{ fontSize: 12, color: 'var(--text-disabled)' }}>OR</span>
+              <div style={{ flex: 1, height: 1, background: 'var(--border-strong)' }} />
             </div>
             <button type="button" className="btn-secondary" onClick={googleSignIn} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
               <span style={{ fontSize: 18 }}>🇬</span> Continue with Google
@@ -111,12 +111,12 @@ export default function Auth() {
 
         <div style={{ textAlign: 'center', marginTop: 'auto' }}>
           {mode === 'login' ? (
-            <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)' }}>
+            <span style={{ fontSize: 14, color: 'var(--text-tertiary)' }}>
               No account?{' '}
-              <button type="button" onClick={() => setMode('signup')} style={{ background: 'none', border: 'none', color: '#7c3aed', cursor: 'pointer', fontSize: 14, fontWeight: 600 }}>Sign up</button>
+              <button type="button" onClick={() => setMode('signup')} style={{ background: 'none', border: 'none', color: '#f97316', cursor: 'pointer', fontSize: 14, fontWeight: 600 }}>Sign up</button>
             </span>
           ) : (
-            <button type="button" onClick={() => setMode('login')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: 14 }}>
+            <button type="button" onClick={() => setMode('login')} style={{ background: 'none', border: 'none', color: 'var(--text-tertiary)', cursor: 'pointer', fontSize: 14 }}>
               ← Back to sign in
             </button>
           )}

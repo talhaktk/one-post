@@ -1,19 +1,16 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, RefreshCw, ChevronRight, Inbox } from 'lucide-react'
+import { Plus, RefreshCw, ChevronRight, Inbox, Sun, Moon } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
 import { supabase } from '../lib/supabase'
 import api from '../lib/api'
 import LoadingSkeleton from '../components/LoadingSkeleton'
-
-const PLATFORM_ICONS = { youtube: '▶', instagram: '📸', facebook: 'f', tiktok: '♪', twitter: '𝕏' }
-const PLATFORM_COLORS = {
-  youtube: '#FF0000', instagram: '#E1306C', facebook: '#1877F2',
-  tiktok: '#69C9D0', twitter: '#ffffff'
-}
+import PlatformIcon, { PLATFORM_BRAND_COLOR } from '../components/PlatformIcon'
 
 export default function Dashboard() {
   const { user, profile } = useAuth()
+  const { isDark, toggleTheme } = useTheme()
   const navigate = useNavigate()
   const [stats, setStats] = useState(null)
   const [posts, setPosts] = useState([])
@@ -61,6 +58,9 @@ export default function Dashboard() {
           <div className="t-display">OnePost</div>
           <div className="t-caption" style={{ marginTop: 4 }}>Welcome back, {firstName}</div>
         </div>
+        <button onClick={toggleTheme} className="icon-btn" aria-label="Toggle theme">
+          {isDark ? <Sun size={18} /> : <Moon size={18} />}
+        </button>
         <button onClick={loadData} className="icon-btn" aria-label="Refresh">
           <RefreshCw size={18} />
         </button>
@@ -144,12 +144,13 @@ export default function Dashboard() {
                       {platforms.length > 0
                         ? platforms.map(p => (
                             <span key={p} style={{
-                              width: 18, height: 18, borderRadius: 5,
-                              background: `${PLATFORM_COLORS[p] || 'var(--accent)'}22`,
-                              color: PLATFORM_COLORS[p] || 'var(--accent)',
-                              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                              fontSize: 10, fontWeight: 700
-                            }}>{PLATFORM_ICONS[p] || '·'}</span>
+                              width: 22, height: 22, borderRadius: 6,
+                              background: `${PLATFORM_BRAND_COLOR[p] || 'var(--accent)'}1f`,
+                              color: PLATFORM_BRAND_COLOR[p] || 'var(--accent)',
+                              display: 'inline-flex', alignItems: 'center', justifyContent: 'center'
+                            }}>
+                              <PlatformIcon platform={p} size={12} />
+                            </span>
                           ))
                         : <span className="t-caption">Not published yet</span>}
                     </div>
