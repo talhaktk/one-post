@@ -46,6 +46,7 @@ export const getFacebookPages = (userId) => api.get(`/facebook-pages/${userId}`)
 export const getTikTokAccounts = (userId) => api.get(`/tiktok-accounts/${userId}`)
 export const disconnectAccount = (accountId) => api.delete(`/accounts/${accountId}`)
 export const syncFacebookPages = (userId) => api.post(`/accounts/facebook/sync-pages`, { user_id: userId })
+export const diagnoseFacebook = () => api.get(`/accounts/facebook/diagnose`)
 
 // OAuth helpers
 export const getOAuthUrl = (platform, userId) =>

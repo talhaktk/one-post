@@ -81,12 +81,17 @@ export default function Dashboard() {
       ) : stats && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 24 }}>
           {[
-            { label: 'Total posts', value: stats.total },
-            { label: 'Platforms', value: stats.platforms },
-            { label: 'FB pages', value: stats.fbPages },
-            { label: 'TikTok', value: stats.tikTok }
+            { label: 'Total posts', value: stats.total,     to: '/history' },
+            { label: 'Platforms',   value: stats.platforms, to: '/accounts' },
+            { label: 'FB pages',    value: stats.fbPages,   to: '/accounts?tab=facebook' },
+            { label: 'TikTok',      value: stats.tikTok,    to: '/accounts' }
           ].map(s => (
-            <div key={s.label} className="card" style={{ padding: '14px 16px' }}>
+            <div
+              key={s.label}
+              className="card-interactive"
+              style={{ padding: '14px 16px' }}
+              onClick={() => navigate(s.to)}
+            >
               <div className="t-mono" style={{ fontSize: 26, fontWeight: 600, lineHeight: 1.1, color: 'var(--text-primary)' }}>{s.value}</div>
               <div className="t-label" style={{ marginTop: 6 }}>{s.label}</div>
             </div>

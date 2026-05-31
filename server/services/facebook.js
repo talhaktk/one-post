@@ -26,12 +26,38 @@ const exchangeCode = async (code) => {
 const getAllPages = async (accessToken) => {
   const pages = []
   let url = `${BASE}/me/accounts?limit=200&fields=id,name,picture,category,fan_count,access_token`
-  while (url) {
-    const res = await axios.get(url, { params: { access_token: accessToken } })
-    pages.push(...(res.data.data || []))
-    url = res.data.paging?.next || null
+  try {
+    while (url) {
+      const res = await axios.get(url, { params: { access_token: accessToken } })
+      pages.push(...(res.data.data || []))
+      url = res.data.paging?.next || null
+    }
+    return pages
+  } catch (err) {
+    const fbErr = err.response?.data?.error
+    if (fbErr) {
+      const isExpired = fbErr.code === 190 || /expired|invalid|session/i.test(fbErr.message || '')
+      const msg = isExpired
+        ? `Facebook session expired. Please reconnect Facebook. (${fbErr.message})`
+        : `${fbErr.message} (FB code ${fbErr.code})`
+      const e = new Error(msg)
+      e.fbCode = fbErr.code
+      e.fbExpired = isExpired
+      throw e
+    }
+    throw err
   }
-  return pages
+}
+
+// Quick health check — does the access token still work?
+const checkTokenHealth = async (accessToken) => {
+  try {
+    const res = await axios.get(`${BASE}/me`, { params: { access_token: accessToken, fields: 'id,name' } })
+    return { ok: true, user: res.data }
+  } catch (err) {
+    const fbErr = err.response?.data?.error
+    return { ok: false, error: fbErr?.message || err.message, code: fbErr?.code }
+  }
 }
 
 const uploadVideoToPageByUrl = async (pageAccessToken, pageId, { videoUrl, title, description }) => {
@@ -157,4 +183,4 @@ const uploadPhotosToAllPages = async (pages, imageUrl, caption, delaySeconds = 3
   return results
 }
 
-module.exports = { getAuthUrl, exchangeCode, getAllPages, uploadVideoToPageByUrl, uploadVideoToPage, uploadToAllPagesByUrl, uploadToAllPages, uploadPhotoToPage, uploadPhotosToAllPages }
+module.exports = { getAuthUrl, exchangeCode, getAllPages, checkTokenHealth, uploadVideoToPageByUrl, uploadVideoToPage, uploadToAllPagesByUrl, uploadToAllPages, uploadPhotoToPage, uploadPhotosToAllPages }
