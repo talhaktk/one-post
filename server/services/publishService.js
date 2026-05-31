@@ -6,6 +6,10 @@ const { v4: uuidv4 } = require('uuid')
 
 const supabase = require('../lib/supabase')
 
+// Global SSE event buffers — keep events alive between job start and first client connect.
+// Cleared when the job ends (or on TTL) by publishJob's finally block.
+if (!global.sseProgressBuffers) global.sseProgressBuffers = {}
+
 // Returns a 1-hour signed URL for a Supabase storage file (works even if bucket is private)
 const getSignedUrl = async (publicUrl, expiresIn = 3600) => {
   try {
@@ -25,6 +29,14 @@ const getSignedUrl = async (publicUrl, expiresIn = 3600) => {
 if (!global.sseProgressClients) global.sseProgressClients = {}
 
 const emit = (jobId, data) => {
+  // Always buffer — this keeps a replayable history if a client reconnects.
+  if (!global.sseProgressBuffers[jobId]) global.sseProgressBuffers[jobId] = []
+  global.sseProgressBuffers[jobId].push(data)
+  // Cap the buffer at 500 events to avoid memory growth on huge jobs
+  if (global.sseProgressBuffers[jobId].length > 500) {
+    global.sseProgressBuffers[jobId].splice(0, global.sseProgressBuffers[jobId].length - 500)
+  }
+
   const clients = global.sseProgressClients[jobId] || []
   const msg = `data: ${JSON.stringify(data)}\n\n`
   clients.forEach(res => { try { res.write(msg) } catch {} })
@@ -216,7 +228,10 @@ const publishJob = async (jobId, payload, userId) => {
     console.error('publishJob fatal error:', err.message)
   } finally {
     emit(jobId, { type: 'done', results })
-    setTimeout(() => { delete global.sseProgressClients[jobId] }, 30000)
+    setTimeout(() => {
+      delete global.sseProgressClients[jobId]
+      delete global.sseProgressBuffers[jobId]
+    }, 60000)
   }
   return results
 }

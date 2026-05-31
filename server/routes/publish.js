@@ -6,11 +6,13 @@ const { publishJob } = require('../services/publishService')
 const router = express.Router()
 
 if (!global.sseProgressClients) global.sseProgressClients = {}
+if (!global.sseProgressBuffers) global.sseProgressBuffers = {}
 
 router.post('/', auth, async (req, res) => {
   try {
     const jobId = uuidv4()
     if (!global.sseProgressClients[jobId]) global.sseProgressClients[jobId] = []
+    if (!global.sseProgressBuffers[jobId]) global.sseProgressBuffers[jobId] = []
 
     res.json({ job_id: jobId })
 
@@ -29,6 +31,7 @@ router.get('/progress/:jobId', (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream')
   res.setHeader('Cache-Control', 'no-cache')
   res.setHeader('Connection', 'keep-alive')
+  res.setHeader('X-Accel-Buffering', 'no')
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.flushHeaders()
 
@@ -37,7 +40,19 @@ router.get('/progress/:jobId', (req, res) => {
 
   res.write(`data: ${JSON.stringify({ type: 'connected', job_id: jobId })}\n\n`)
 
+  // Replay any events that fired before this client connected
+  const buffered = global.sseProgressBuffers[jobId] || []
+  for (const data of buffered) {
+    try { res.write(`data: ${JSON.stringify(data)}\n\n`) } catch {}
+  }
+
+  // Heartbeat so proxies (Cloudflare, Railway) don't close the idle connection
+  const heartbeat = setInterval(() => {
+    try { res.write(': heartbeat\n\n') } catch { clearInterval(heartbeat) }
+  }, 15000)
+
   req.on('close', () => {
+    clearInterval(heartbeat)
     global.sseProgressClients[jobId] = (global.sseProgressClients[jobId] || []).filter(c => c !== res)
   })
 })

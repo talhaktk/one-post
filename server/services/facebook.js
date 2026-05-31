@@ -63,10 +63,12 @@ const checkTokenHealth = async (accessToken) => {
 const uploadVideoToPageByUrl = async (pageAccessToken, pageId, { videoUrl, title, description }) => {
   try {
     const res = await axios.post(`${BASE}/${pageId}/videos`, null, {
-      params: { file_url: videoUrl, title: title || '', description: description || '', published: 'true', access_token: pageAccessToken }
+      params: { file_url: videoUrl, title: title || '', description: description || '', published: 'true', access_token: pageAccessToken },
+      timeout: 90_000 // 90s — Facebook usually responds in seconds; if it hangs longer, fail and retry
     })
     return { post_id: res.data.id, post_url: `https://www.facebook.com/${pageId}/videos/${res.data.id}` }
   } catch (err) {
+    if (err.code === 'ECONNABORTED') throw new Error('Facebook timed out fetching the video URL after 90s')
     const fbErr = err.response?.data?.error
     const msg = fbErr ? `${fbErr.message} (FB code ${fbErr.code})` : err.message
     throw new Error(msg)
@@ -148,10 +150,12 @@ const uploadToAllPages = async (pages, videoPath, title, description, delaySecon
 const uploadPhotoToPage = async (pageAccessToken, pageId, { imageUrl, caption }) => {
   try {
     const res = await axios.post(`${BASE}/${pageId}/photos`, null, {
-      params: { url: imageUrl, caption: caption || '', access_token: pageAccessToken }
+      params: { url: imageUrl, caption: caption || '', access_token: pageAccessToken },
+      timeout: 60_000
     })
     return { post_id: res.data.id, post_url: `https://www.facebook.com/${pageId}/posts/${res.data.post_id || res.data.id}` }
   } catch (err) {
+    if (err.code === 'ECONNABORTED') throw new Error('Facebook timed out fetching the image URL after 60s')
     const fbErr = err.response?.data?.error
     const msg = fbErr ? `${fbErr.message} (FB code ${fbErr.code})` : err.message
     throw new Error(msg)
