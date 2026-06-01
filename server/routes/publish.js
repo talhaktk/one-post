@@ -25,6 +25,32 @@ router.post('/', auth, async (req, res) => {
   }
 })
 
+// DB-based progress: client can poll this if SSE fails. DB is the source of truth.
+router.get('/status/:videoId', auth, async (req, res) => {
+  try {
+    const supabase = require('../lib/supabase')
+    const { data, error } = await supabase
+      .from('posts')
+      .select('platform, target_id, target_name, status, platform_post_url, error_message, published_at, created_at')
+      .eq('video_id', req.params.videoId)
+      .eq('user_id', req.user.id)
+      .order('created_at', { ascending: true })
+    if (error) return res.status(500).json({ error: error.message })
+
+    const published = (data || []).filter(p => p.status === 'published').length
+    const failed = (data || []).filter(p => p.status === 'failed').length
+    res.json({
+      video_id: req.params.videoId,
+      total: data?.length || 0,
+      published,
+      failed,
+      posts: data || []
+    })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
 router.get('/progress/:jobId', (req, res) => {
   const { jobId } = req.params
 

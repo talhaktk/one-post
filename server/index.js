@@ -36,8 +36,31 @@ app.use('/api/schedule', require('./routes/schedule'))
 
 app.use('/api/admin', require('./routes/admin'))
 
-// Health check
-app.get('/health', (req, res) => res.json({ status: 'ok', time: new Date().toISOString() }))
+// Health check — verify which version is actually running (deploy verification)
+const SERVER_BOOT = new Date().toISOString()
+const SERVER_VERSION = process.env.RAILWAY_GIT_COMMIT_SHA?.slice(0, 7) || process.env.GIT_COMMIT?.slice(0, 7) || 'dev'
+app.get('/health', (req, res) => res.json({
+  status: 'ok',
+  time: new Date().toISOString(),
+  bootedAt: SERVER_BOOT,
+  version: SERVER_VERSION,
+  features: {
+    sseBuffer: true,
+    facebookTimeout: true,
+    diagnoseFacebook: true
+  }
+}))
+app.get('/api/health', (req, res) => res.json({
+  status: 'ok',
+  time: new Date().toISOString(),
+  bootedAt: SERVER_BOOT,
+  version: SERVER_VERSION,
+  features: {
+    sseBuffer: true,
+    facebookTimeout: true,
+    diagnoseFacebook: true
+  }
+}))
 
 app.listen(PORT, () => {
   console.log(`OnePost server running on port ${PORT}`)

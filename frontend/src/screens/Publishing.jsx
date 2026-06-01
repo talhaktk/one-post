@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Copy, ExternalLink, Calendar, Sparkles, Home, Plus } from 'lucide-react'
+import { Copy, ExternalLink, Calendar, Sparkles, Home, Plus, RefreshCw, AlertTriangle, Bug } from 'lucide-react'
 import { usePost } from '../context/PostContext'
 import { useAuth } from '../context/AuthContext'
-import { publishPost, getPublishProgress } from '../lib/api'
+import { publishPost, getPublishProgress, getPublishStatus, getServerHealth } from '../lib/api'
 import { supabase } from '../lib/supabase'
 import ProgressCard from '../components/ProgressCard'
 import toast from 'react-hot-toast'
@@ -12,17 +12,32 @@ export default function Publishing() {
   const navigate = useNavigate()
   const { postState, resetPost } = usePost()
   const { user } = useAuth()
-  const [, setJobId] = useState(null)
+  const [jobId, setJobId] = useState(null)
   const [targets, setTargets] = useState([])
   const [done, setDone] = useState(false)
-  const [, setFailed] = useState(false)
+  const [failed, setFailed] = useState(false)
+  const [sseState, setSseState] = useState('idle') // 'idle' | 'connecting' | 'open' | 'error' | 'closed'
+  const [lastEventAt, setLastEventAt] = useState(null)
+  const [publishError, setPublishError] = useState(null)
+  const [showDebug, setShowDebug] = useState(false)
+  const [eventLog, setEventLog] = useState([])
+  const [health, setHealth] = useState(null)
   const sseRef = useRef(null)
+  const pollRef = useRef(null)
 
   useEffect(() => { startPublishing() }, [])
-  useEffect(() => { return () => { if (sseRef.current) sseRef.current.close() } }, [])
+  useEffect(() => {
+    return () => {
+      if (sseRef.current) sseRef.current.close()
+      if (pollRef.current) clearInterval(pollRef.current)
+    }
+  }, [])
 
   const startPublishing = async () => {
     try {
+      // Capture server version up-front so the debug panel can show it
+      try { setHealth(await getServerHealth()) } catch {}
+
       const payload = {
         video_id: postState.videoId,
         title: postState.title,
@@ -40,10 +55,41 @@ export default function Publishing() {
       const { job_id } = await publishPost(payload)
       setJobId(job_id)
       connectSSE(job_id)
+      startDbPolling()
     } catch (err) {
-      toast.error(err.message || 'Failed to start publishing')
+      const msg = err?.error || err?.message || 'Failed to start publishing'
+      setPublishError(msg)
+      toast.error(msg, { duration: 8000 })
       setFailed(true)
     }
+  }
+
+  // DB-based fallback polling — the database is the source of truth.
+  // If SSE breaks, this still reflects real progress within a few seconds.
+  const startDbPolling = () => {
+    if (pollRef.current) clearInterval(pollRef.current)
+    const poll = async () => {
+      if (!postState.videoId || done) return
+      try {
+        const status = await getPublishStatus(postState.videoId)
+        if (!status?.posts?.length) return
+        setTargets(prev => prev.map(t => {
+          // Try to match by stored target_id (e.g. fb_<pageId>)
+          const dbHit = status.posts.find(p => (p.target_id && (`fb_${p.target_id}` === t.id || `tiktok_${p.target_id}` === t.id || p.target_id === t.id)) || (!p.target_id && p.platform === t.platform))
+          if (!dbHit) return t
+          if (t.status === 'published' || t.status === 'failed') return t  // SSE already finalized
+          return {
+            ...t,
+            status: dbHit.status,
+            post_url: dbHit.platform_post_url || t.post_url,
+            error_message: dbHit.error_message || t.error_message,
+            progress: dbHit.status === 'published' ? 100 : t.progress
+          }
+        }))
+      } catch {}
+    }
+    poll() // immediate
+    pollRef.current = setInterval(poll, 5000)
   }
 
   const buildTargets = () => {
@@ -138,10 +184,15 @@ export default function Publishing() {
   }
 
   const connectSSE = (jid) => {
+    setSseState('connecting')
     const es = getPublishProgress(jid)
     sseRef.current = es
 
+    es.onopen = () => setSseState('open')
+
     es.onmessage = (e) => {
+      setLastEventAt(Date.now())
+      setEventLog(prev => [...prev.slice(-29), { t: Date.now(), raw: e.data }])
       try {
         const data = JSON.parse(e.data)
         if (data.type === 'progress') {
@@ -157,14 +208,22 @@ export default function Publishing() {
             return [...prev, { id: data.target_id, ...data }]
           })
         }
-        if (data.type === 'done') { setDone(true); es.close() }
+        if (data.type === 'done') { setDone(true); setSseState('closed'); es.close() }
         if (data.type === 'countdown') {
           setTargets(prev => prev.map(t => t.id === data.target_id ? { ...t, status: 'waiting', countdown: data.countdown } : t))
         }
       } catch {}
     }
 
-    es.onerror = () => es.close()
+    es.onerror = () => {
+      setSseState('error')
+      // Don't auto-close — EventSource will auto-reconnect. DB polling continues regardless.
+    }
+  }
+
+  const reconnectSSE = () => {
+    if (sseRef.current) sseRef.current.close()
+    if (jobId) connectSSE(jobId)
   }
 
   const publishedTargets = targets.filter(t => t.status === 'published')
@@ -266,6 +325,50 @@ export default function Publishing() {
           <div className="progress-fill" style={{ width: `${progressPct}%` }} />
         </div>
       </div>
+
+      {/* Connection / error diagnostics — visible when something's not flowing */}
+      {(publishError || sseState === 'error' || (lastEventAt && Date.now() - lastEventAt > 30000) || (!lastEventAt && sseState === 'connecting')) && (
+        <div className="card" style={{ padding: 12, marginBottom: 14, borderColor: publishError ? 'rgba(239,68,68,0.28)' : 'rgba(245,158,11,0.32)', background: publishError ? 'var(--danger-soft)' : 'var(--warning-soft)' }}>
+          <div className="row" style={{ gap: 10, alignItems: 'flex-start' }}>
+            <AlertTriangle size={16} style={{ color: publishError ? 'var(--danger)' : 'var(--warning)', flexShrink: 0, marginTop: 2 }} />
+            <div className="grow">
+              <div className="t-h3" style={{ color: publishError ? 'var(--danger)' : 'var(--warning)', marginBottom: 4 }}>
+                {publishError ? 'Publish request failed' : sseState === 'error' ? 'Connection error — reconnecting' : 'No events received yet'}
+              </div>
+              <div className="t-body-sm" style={{ marginBottom: 8 }}>
+                {publishError
+                  ? publishError
+                  : sseState === 'error'
+                    ? 'Live progress dropped. The DB poller will still report real status every 5 seconds.'
+                    : 'Still waiting for the server. The DB poller checks every 5 seconds — if the server is publishing, progress will appear here even without live events.'}
+              </div>
+              <div className="row" style={{ gap: 8 }}>
+                <button onClick={reconnectSSE} className="btn-secondary btn-sm" style={{ width: 'auto', padding: '0 12px' }}>
+                  <RefreshCw size={13} /> Reconnect
+                </button>
+                <button onClick={() => setShowDebug(s => !s)} className="btn-ghost btn-sm" style={{ width: 'auto', padding: '0 10px' }}>
+                  <Bug size={13} /> {showDebug ? 'Hide' : 'Show'} debug
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showDebug && (
+        <div className="card" style={{ padding: 12, marginBottom: 14, fontFamily: "'DM Mono', monospace", fontSize: 11, lineHeight: 1.6 }}>
+          <div style={{ color: 'var(--text-secondary)', marginBottom: 8 }}>SSE: <span style={{ color: 'var(--text-primary)' }}>{sseState}</span> · Job: <span style={{ color: 'var(--text-primary)' }}>{jobId?.slice(0,8) || '—'}</span> · Last event: <span style={{ color: 'var(--text-primary)' }}>{lastEventAt ? `${Math.round((Date.now()-lastEventAt)/1000)}s ago` : 'never'}</span></div>
+          <div style={{ color: 'var(--text-secondary)', marginBottom: 8 }}>Server: <span style={{ color: 'var(--text-primary)' }}>{health?.version || 'unknown'}</span> · Booted: <span style={{ color: 'var(--text-primary)' }}>{health?.bootedAt ? new Date(health.bootedAt).toLocaleTimeString() : '—'}</span></div>
+          <div style={{ color: 'var(--text-secondary)', marginBottom: 4 }}>Last events:</div>
+          {eventLog.length === 0
+            ? <div style={{ color: 'var(--text-tertiary)' }}>(none yet)</div>
+            : eventLog.slice(-8).map((e, i) => (
+                <div key={i} style={{ color: 'var(--text-tertiary)', wordBreak: 'break-all' }}>
+                  +{Math.round((e.t - (eventLog[0]?.t || e.t))/1000)}s {e.raw.slice(0, 200)}
+                </div>
+              ))}
+        </div>
+      )}
 
       {postState.scheduledAt ? (
         <div className="card" style={{ padding: 24, textAlign: 'center' }}>

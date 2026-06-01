@@ -36,6 +36,8 @@ export const fetchAIHashtags = (title, description, category) =>
 // Publish
 export const publishPost = (payload) => api.post('/publish', payload)
 export const getPublishProgress = (jobId) => new EventSource(`${API_BASE}/publish/progress/${jobId}`)
+export const getPublishStatus = (videoId) => api.get(`/publish/status/${videoId}`)
+export const getServerHealth = () => api.get('/health')
 
 // Posts history
 export const getPosts = (userId) => api.get(`/posts/${userId}`)
