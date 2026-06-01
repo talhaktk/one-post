@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
-import { RefreshCw, ExternalLink, Trash2, ChevronDown, ChevronUp, ArrowLeft, Inbox } from 'lucide-react'
+import { RefreshCw, ExternalLink, Trash2, ChevronDown, ChevronUp, ArrowLeft, Inbox, Send, RotateCcw } from 'lucide-react'
 import api from '../lib/api'
 import { supabase } from '../lib/supabase'
 import toast from 'react-hot-toast'
 import PlatformIcon, { PLATFORM_BRAND_COLOR } from '../components/PlatformIcon'
+import { usePost } from '../context/PostContext'
 
 const STATUS_COLOR = {
   published: 'var(--success)',
@@ -37,6 +38,7 @@ const PlatformBadge = ({ platform, size = 22 }) => (
 
 export default function History() {
   const { user } = useAuth()
+  const { updatePost, resetPost } = usePost()
   const navigate = useNavigate()
   const [videos, setVideos] = useState([])
   const [loading, setLoading] = useState(true)
@@ -66,6 +68,39 @@ export default function History() {
     await supabase.from('videos').delete().eq('id', videoId).eq('user_id', user.id)
     toast.success('Deleted')
     loadHistory()
+  }
+
+  // Publish an existing upload (or retry a failed one) — loads the video into
+  // PostContext so SelectTargets can pick up from there. Skips upload/edit steps.
+  const publishExisting = async (video, retry = false) => {
+    // Pull existing processed clips so each platform uses the right aspect-ratio clip
+    let processedClips = []
+    try {
+      const { data } = await supabase
+        .from('processed_clips').select('*')
+        .eq('video_id', video.id)
+      processedClips = data || []
+    } catch {}
+
+    if (retry) {
+      // Clean up old failed post rows so the next attempt starts fresh
+      await supabase.from('posts').delete().eq('video_id', video.id).eq('status', 'failed')
+    }
+
+    resetPost()
+    updatePost({
+      mediaType: video.media_type || 'video',
+      videoId: video.id,
+      title: video.title || '',
+      description: video.description || '',
+      originalUrl: video.original_url || null,
+      thumbnailOptions: video.thumbnail_url ? [video.thumbnail_url] : [],
+      selectedThumbnail: video.thumbnail_url || null,
+      processedClips,
+      // Default targets to whatever already succeeded — user can toggle on Select Targets
+      hashtags: { youtube: [], instagram: [], facebook: [], tiktok: [], twitter: [] }
+    })
+    navigate('/targets')
   }
 
   const STATUS_FILTERS = ['all', 'uploaded', 'published', 'failed', 'publishing', 'scheduled']
@@ -206,9 +241,21 @@ export default function History() {
                       </div>
                     )}
 
-                    <button onClick={() => deleteVideo(video.id)} className="btn-danger btn-sm" style={{ width: '100%', marginTop: 12 }}>
-                      <Trash2 size={13} /> Delete upload
-                    </button>
+                    <div className="stack-sm" style={{ marginTop: 12 }}>
+                      {status === 'uploaded' && (
+                        <button onClick={() => publishExisting(video)} className="btn-primary btn-sm">
+                          <Send size={13} /> Publish now
+                        </button>
+                      )}
+                      {(status === 'failed' || status === 'partial') && (
+                        <button onClick={() => publishExisting(video, true)} className="btn-primary btn-sm">
+                          <RotateCcw size={13} /> {status === 'partial' ? 'Publish remaining' : 'Retry publish'}
+                        </button>
+                      )}
+                      <button onClick={() => deleteVideo(video.id)} className="btn-danger btn-sm" style={{ width: '100%' }}>
+                        <Trash2 size={13} /> Delete upload
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
