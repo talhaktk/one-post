@@ -72,7 +72,8 @@ const getClipPath = async (clipId, platform, videoId) => {
 const getImageUrl = async (videoId) => {
   const { data } = await supabase.from('videos').select('original_url').eq('id', videoId).single()
   if (!data?.original_url) throw new Error('Image not found')
-  return data.original_url
+  // Return a 1-hour signed URL so Facebook can fetch even when the storage bucket is private
+  return await getSignedUrl(data.original_url)
 }
 
 const downloadToTemp = async (url, ext = '.jpg') => {
