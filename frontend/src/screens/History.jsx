@@ -45,6 +45,8 @@ export default function History() {
   const [filter, setFilter] = useState('all')
   const [platformFilter, setPlatformFilter] = useState('all')
   const [expanded, setExpanded] = useState(null)
+  const [pendingDelete, setPendingDelete] = useState(null)
+  const [busy, setBusy] = useState(null)
 
   useEffect(() => { if (user) loadHistory() }, [user, filter, platformFilter])
 
@@ -62,45 +64,66 @@ export default function History() {
     setLoading(false)
   }
 
+  // Two-tap delete — iOS standalone PWAs sometimes drop window.confirm() silently.
+  // First tap arms the button (visual "Confirm delete?"), second tap (within 4s) deletes.
   const deleteVideo = async (videoId) => {
-    if (!confirm('Delete this upload and all its post records?')) return
-    await supabase.from('posts').delete().eq('video_id', videoId)
-    await supabase.from('videos').delete().eq('id', videoId).eq('user_id', user.id)
-    toast.success('Deleted')
-    loadHistory()
+    if (pendingDelete !== videoId) {
+      setPendingDelete(videoId)
+      setTimeout(() => setPendingDelete(p => p === videoId ? null : p), 4000)
+      return
+    }
+    setPendingDelete(null)
+    setBusy(`delete-${videoId}`)
+    try {
+      const { error: e1 } = await supabase.from('posts').delete().eq('video_id', videoId)
+      if (e1) throw e1
+      const { error: e2 } = await supabase.from('videos').delete().eq('id', videoId).eq('user_id', user.id)
+      if (e2) throw e2
+      toast.success('Deleted')
+      loadHistory()
+    } catch (err) {
+      toast.error('Delete failed: ' + (err?.message || err))
+    } finally {
+      setBusy(null)
+    }
   }
 
   // Publish an existing upload (or retry a failed one) — loads the video into
   // PostContext so SelectTargets can pick up from there. Skips upload/edit steps.
   const publishExisting = async (video, retry = false) => {
-    // Pull existing processed clips so each platform uses the right aspect-ratio clip
-    let processedClips = []
+    setBusy(`publish-${video.id}`)
+    toast(retry ? 'Preparing retry…' : 'Loading upload…', { duration: 1500 })
     try {
-      const { data } = await supabase
-        .from('processed_clips').select('*')
-        .eq('video_id', video.id)
-      processedClips = data || []
-    } catch {}
+      let processedClips = []
+      try {
+        const { data } = await supabase
+          .from('processed_clips').select('*')
+          .eq('video_id', video.id)
+        processedClips = data || []
+      } catch {}
 
-    if (retry) {
-      // Clean up old failed post rows so the next attempt starts fresh
-      await supabase.from('posts').delete().eq('video_id', video.id).eq('status', 'failed')
+      if (retry) {
+        await supabase.from('posts').delete().eq('video_id', video.id).eq('status', 'failed')
+      }
+
+      resetPost()
+      updatePost({
+        mediaType: video.media_type || 'video',
+        videoId: video.id,
+        title: video.title || '',
+        description: video.description || '',
+        originalUrl: video.original_url || null,
+        thumbnailOptions: video.thumbnail_url ? [video.thumbnail_url] : [],
+        selectedThumbnail: video.thumbnail_url || null,
+        processedClips,
+        hashtags: { youtube: [], instagram: [], facebook: [], tiktok: [], twitter: [] }
+      })
+      navigate('/targets')
+    } catch (err) {
+      toast.error('Could not load upload: ' + (err?.message || err))
+    } finally {
+      setBusy(null)
     }
-
-    resetPost()
-    updatePost({
-      mediaType: video.media_type || 'video',
-      videoId: video.id,
-      title: video.title || '',
-      description: video.description || '',
-      originalUrl: video.original_url || null,
-      thumbnailOptions: video.thumbnail_url ? [video.thumbnail_url] : [],
-      selectedThumbnail: video.thumbnail_url || null,
-      processedClips,
-      // Default targets to whatever already succeeded — user can toggle on Select Targets
-      hashtags: { youtube: [], instagram: [], facebook: [], tiktok: [], twitter: [] }
-    })
-    navigate('/targets')
   }
 
   const STATUS_FILTERS = ['all', 'uploaded', 'published', 'failed', 'publishing', 'scheduled']
@@ -241,19 +264,40 @@ export default function History() {
                       </div>
                     )}
 
-                    <div className="stack-sm" style={{ marginTop: 12 }}>
+                    <div className="stack-sm" style={{ marginTop: 12 }} onClick={(e) => e.stopPropagation()}>
                       {status === 'uploaded' && (
-                        <button onClick={() => publishExisting(video)} className="btn-primary btn-sm">
-                          <Send size={13} /> Publish now
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); publishExisting(video) }}
+                          disabled={busy === `publish-${video.id}`}
+                          className="btn-primary btn-sm"
+                        >
+                          <Send size={13} /> {busy === `publish-${video.id}` ? 'Loading…' : 'Publish now'}
                         </button>
                       )}
                       {(status === 'failed' || status === 'partial') && (
-                        <button onClick={() => publishExisting(video, true)} className="btn-primary btn-sm">
-                          <RotateCcw size={13} /> {status === 'partial' ? 'Publish remaining' : 'Retry publish'}
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); publishExisting(video, true) }}
+                          disabled={busy === `publish-${video.id}`}
+                          className="btn-primary btn-sm"
+                        >
+                          <RotateCcw size={13} /> {busy === `publish-${video.id}` ? 'Loading…' : (status === 'partial' ? 'Publish remaining' : 'Retry publish')}
                         </button>
                       )}
-                      <button onClick={() => deleteVideo(video.id)} className="btn-danger btn-sm" style={{ width: '100%' }}>
-                        <Trash2 size={13} /> Delete upload
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); deleteVideo(video.id) }}
+                        disabled={busy === `delete-${video.id}`}
+                        className="btn-danger btn-sm"
+                        style={{ width: '100%' }}
+                      >
+                        <Trash2 size={13} />
+                        {busy === `delete-${video.id}`
+                          ? 'Deleting…'
+                          : pendingDelete === video.id
+                            ? 'Tap again to confirm delete'
+                            : 'Delete upload'}
                       </button>
                     </div>
                   </div>
