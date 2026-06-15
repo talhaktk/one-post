@@ -29,7 +29,7 @@ const STATUS_COLOR = {
 }
 
 export default function ProgressCard({ target }) {
-  const { platform, target_name, status, progress = 0, error_message, countdown, post_url } = target
+  const { platform, target_name, status, progress = 0, error_message, countdown, maxCountdown, post_url } = target
   const color = PLATFORM_BRAND_COLOR[platform] || '#f97316'
   const isActive = status === 'uploading' || status === 'processing'
 
@@ -79,7 +79,7 @@ export default function ProgressCard({ target }) {
             <div style={{ flex: 1, height: 4, background: 'rgba(245,158,11,0.18)', borderRadius: 999, overflow: 'hidden' }}>
               <div style={{
                 height: '100%', background: 'var(--warning)', borderRadius: 999,
-                width: `${Math.min(100, (countdown / 30) * 100)}%`,
+                width: `${Math.min(100, (countdown / (maxCountdown || countdown)) * 100)}%`,
                 transition: 'width 1s linear'
               }} />
             </div>

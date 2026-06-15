@@ -86,7 +86,7 @@ const downloadToTemp = async (url, ext = '.jpg') => {
 }
 
 const publishJob = async (jobId, payload, userId) => {
-  const { video_id, targets, hashtags_per_platform, title, description, post_delay_seconds = 30, media_type = 'video' } = payload
+  const { video_id, targets, hashtags_per_platform, title, description, post_delay_seconds = 10, media_type = 'video' } = payload
   const isImage = media_type === 'image'
 
   emit(jobId, { type: 'started', job_id: jobId })

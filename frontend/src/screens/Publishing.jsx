@@ -22,6 +22,7 @@ export default function Publishing() {
   const [showDebug, setShowDebug] = useState(false)
   const [eventLog, setEventLog] = useState([])
   const [health, setHealth] = useState(null)
+  const [dbPollActive, setDbPollActive] = useState(false) // true once DB poll returns any posts
   const sseRef = useRef(null)
   const pollRef = useRef(null)
 
@@ -45,7 +46,7 @@ export default function Publishing() {
         targets: buildTargets(),
         hashtags_per_platform: postState.hashtags,
         scheduled_at: postState.scheduledAt || null,
-        post_delay_seconds: postState.postDelay || 30,
+        post_delay_seconds: postState.postDelay || 10,
         media_type: postState.mediaType || 'video'
       }
 
@@ -73,6 +74,7 @@ export default function Publishing() {
       try {
         const status = await getPublishStatus(postState.videoId)
         if (!status?.posts?.length) return
+        setDbPollActive(true)
         setTargets(prev => prev.map(t => {
           // Try to match by stored target_id (e.g. fb_<pageId>)
           const dbHit = status.posts.find(p => (p.target_id && (`fb_${p.target_id}` === t.id || `tiktok_${p.target_id}` === t.id || p.target_id === t.id)) || (!p.target_id && p.platform === t.platform))
@@ -210,7 +212,12 @@ export default function Publishing() {
         }
         if (data.type === 'done') { setDone(true); setSseState('closed'); es.close() }
         if (data.type === 'countdown') {
-          setTargets(prev => prev.map(t => t.id === data.target_id ? { ...t, status: 'waiting', countdown: data.countdown } : t))
+          setTargets(prev => prev.map(t => t.id === data.target_id ? {
+            ...t,
+            status: 'waiting',
+            countdown: data.countdown,
+            maxCountdown: t.maxCountdown || data.countdown
+          } : t))
         }
       } catch {}
     }
@@ -309,7 +316,28 @@ export default function Publishing() {
   return (
     <div className="screen-pad">
       <div style={{ marginBottom: 20 }}>
-        <div className="t-label" style={{ marginBottom: 6 }}>Publishing</div>
+        <div className="row-between" style={{ marginBottom: 6 }}>
+          <div className="t-label">Publishing</div>
+          {/* Live / Polling status dot */}
+          {sseState === 'open' ? (
+            <div className="row" style={{ gap: 5 }}>
+              <div style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--success)', animation: 'pulse 2s ease-in-out infinite' }} />
+              <span style={{ fontSize: 11, color: 'var(--success)', fontWeight: 600 }}>Live</span>
+            </div>
+          ) : sseState === 'connecting' ? (
+            <div className="row" style={{ gap: 5 }}>
+              <div style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--warning)' }} />
+              <span style={{ fontSize: 11, color: 'var(--warning)', fontWeight: 600 }}>Connecting…</span>
+            </div>
+          ) : sseState === 'error' ? (
+            <div className="row" style={{ gap: 5 }}>
+              <div style={{ width: 7, height: 7, borderRadius: '50%', background: dbPollActive ? 'var(--accent)' : 'var(--warning)' }} />
+              <span style={{ fontSize: 11, color: dbPollActive ? 'var(--accent)' : 'var(--warning)', fontWeight: 600 }}>
+                {dbPollActive ? 'Polling' : 'Reconnecting'}
+              </span>
+            </div>
+          ) : null}
+        </div>
         <div className="t-display">Sending to platforms…</div>
         <div className="row-between" style={{ marginTop: 8 }}>
           <div className="t-body-sm">
@@ -317,7 +345,7 @@ export default function Publishing() {
             <span> / </span>
             <span className="t-mono" style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{totalCount}</span>
             <span> published</span>
-            {activeTarget && <span className="t-muted"> · next: {activeTarget.target_name}</span>}
+            {activeTarget && <span className="t-muted"> · {activeTarget.target_name}</span>}
           </div>
           <div className="t-mono" style={{ fontSize: 13, color: 'var(--accent)', fontWeight: 600 }}>{progressPct}%</div>
         </div>
@@ -326,21 +354,43 @@ export default function Publishing() {
         </div>
       </div>
 
-      {/* Connection / error diagnostics — visible when something's not flowing */}
-      {(publishError || sseState === 'error' || (lastEventAt && Date.now() - lastEventAt > 30000) || (!lastEventAt && sseState === 'connecting')) && (
-        <div className="card" style={{ padding: 12, marginBottom: 14, borderColor: publishError ? 'rgba(239,68,68,0.28)' : 'rgba(245,158,11,0.32)', background: publishError ? 'var(--danger-soft)' : 'var(--warning-soft)' }}>
+      {/* Critical failure — couldn't even start publishing */}
+      {publishError && (
+        <div className="card" style={{ padding: 12, marginBottom: 14, borderColor: 'rgba(239,68,68,0.28)', background: 'var(--danger-soft)' }}>
           <div className="row" style={{ gap: 10, alignItems: 'flex-start' }}>
-            <AlertTriangle size={16} style={{ color: publishError ? 'var(--danger)' : 'var(--warning)', flexShrink: 0, marginTop: 2 }} />
+            <AlertTriangle size={16} style={{ color: 'var(--danger)', flexShrink: 0, marginTop: 2 }} />
             <div className="grow">
-              <div className="t-h3" style={{ color: publishError ? 'var(--danger)' : 'var(--warning)', marginBottom: 4 }}>
-                {publishError ? 'Publish request failed' : sseState === 'error' ? 'Connection error — reconnecting' : 'No events received yet'}
-              </div>
+              <div className="t-h3" style={{ color: 'var(--danger)', marginBottom: 4 }}>Publish request failed</div>
+              <div className="t-body-sm">{publishError}</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SSE dropped but server is actively publishing (DB confirms it) — calm notice, not an alarm */}
+      {!publishError && !done && sseState === 'error' && dbPollActive && (
+        <div className="card" style={{ padding: 10, marginBottom: 14, borderColor: 'rgba(124,58,237,0.18)', background: 'var(--accent-soft)' }}>
+          <div className="row" style={{ gap: 8 }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)', flexShrink: 0 }} />
+            <div className="t-body-sm" style={{ color: 'var(--accent)', flex: 1 }}>
+              Publishing in progress — live connection paused, updating from server every 5s
+            </div>
+            <button onClick={reconnectSSE} className="btn-ghost btn-sm" style={{ width: 'auto', padding: '0 8px', fontSize: 11 }}>
+              <RefreshCw size={11} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* SSE dropped and DB also shows nothing — might be a real problem */}
+      {!publishError && !done && sseState === 'error' && !dbPollActive && (
+        <div className="card" style={{ padding: 12, marginBottom: 14, borderColor: 'rgba(245,158,11,0.32)', background: 'var(--warning-soft)' }}>
+          <div className="row" style={{ gap: 10, alignItems: 'flex-start' }}>
+            <AlertTriangle size={16} style={{ color: 'var(--warning)', flexShrink: 0, marginTop: 2 }} />
+            <div className="grow">
+              <div className="t-h3" style={{ color: 'var(--warning)', marginBottom: 4 }}>Connection error — reconnecting</div>
               <div className="t-body-sm" style={{ marginBottom: 8 }}>
-                {publishError
-                  ? publishError
-                  : sseState === 'error'
-                    ? 'Live progress dropped. The DB poller will still report real status every 5 seconds.'
-                    : 'Still waiting for the server. The DB poller checks every 5 seconds — if the server is publishing, progress will appear here even without live events.'}
+                Live updates dropped. Checking server status every 5 seconds.
               </div>
               <div className="row" style={{ gap: 8 }}>
                 <button onClick={reconnectSSE} className="btn-secondary btn-sm" style={{ width: 'auto', padding: '0 12px' }}>

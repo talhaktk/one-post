@@ -1,5 +1,8 @@
 const axios = require('axios')
 const fs = require('fs')
+const path = require('path')
+const os = require('os')
+const { v4: uuidv4 } = require('uuid')
 const { wait, retry } = require('./helpers')
 const cfg = require('./configService')
 
@@ -148,17 +151,32 @@ const uploadToAllPages = async (pages, videoPath, title, description, delaySecon
 }
 
 const uploadPhotoToPage = async (pageAccessToken, pageId, { imageUrl, caption }) => {
+  const fetch = require('node-fetch')
+  const FormData = require('form-data')
+  // Download to temp file so Facebook doesn't need to reach our private storage URL
+  const response = await fetch(imageUrl, { timeout: 60_000 })
+  if (!response.ok) throw new Error(`Failed to download image: HTTP ${response.status}`)
+  const buffer = await response.buffer()
+  const tmpPath = path.join(os.tmpdir(), `fb_img_${uuidv4()}.jpg`)
+  fs.writeFileSync(tmpPath, buffer)
   try {
-    const res = await axios.post(`${BASE}/${pageId}/photos`, null, {
-      params: { url: imageUrl, caption: caption || '', access_token: pageAccessToken },
+    const formData = new FormData()
+    formData.append('source', fs.createReadStream(tmpPath))
+    formData.append('caption', caption || '')
+    formData.append('access_token', pageAccessToken)
+    const res = await axios.post(`${BASE}/${pageId}/photos`, formData, {
+      headers: formData.getHeaders ? formData.getHeaders() : { 'Content-Type': 'multipart/form-data' },
+      maxContentLength: Infinity, maxBodyLength: Infinity,
       timeout: 60_000
     })
     return { post_id: res.data.id, post_url: `https://www.facebook.com/${pageId}/posts/${res.data.post_id || res.data.id}` }
   } catch (err) {
-    if (err.code === 'ECONNABORTED') throw new Error('Facebook timed out fetching the image URL after 60s')
+    if (err.code === 'ECONNABORTED') throw new Error('Facebook timed out uploading the image after 60s')
     const fbErr = err.response?.data?.error
     const msg = fbErr ? `${fbErr.message} (FB code ${fbErr.code})` : err.message
     throw new Error(msg)
+  } finally {
+    try { fs.unlinkSync(tmpPath) } catch {}
   }
 }
 
